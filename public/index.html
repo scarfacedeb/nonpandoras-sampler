@@ -1293,6 +1293,8 @@
                                 const fg = '000000';
                                 const bg = 'FFFFFF';
                                 linkQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=${fg}&bgcolor=${bg}&data=${encodeURIComponent(data.messageLink)}`;
+                                // Boost brightness/contrast a touch for visibility
+                                linkQr.style.filter = 'brightness(1.2) contrast(1.15)';
                                 linkQr.style.display = 'block';
                                 linkRow.style.display = 'block';
                             }
