@@ -27,7 +27,10 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
-    const uniqueFilename = `${uuidv4()}.webm`;
+    const extFromOriginal = path.extname(file.originalname || '')
+    let ext = extFromOriginal && extFromOriginal.length > 0 ? extFromOriginal : (file.mimetype === 'audio/mpeg' ? '.mp3' : '.webm');
+    if (!ext) ext = '.webm';
+    const uniqueFilename = `${uuidv4()}${ext}`;
     cb(null, uniqueFilename);
   }
 });
@@ -54,16 +57,18 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 // Настройка транспорта для отправки email
 let emailTransporter;
 try {
-  if (process.env.EMAIL_SERVICE && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     emailTransporter = nodemailer.createTransport({
-      service: process.env.EMAIL_SERVICE, // Может быть 'Yandex' или другой поддерживаемый сервис
+      service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       }
     });
+    console.log('Gmail транспорт успешно настроен');
   } else {
     console.warn('Настройки EMAIL не найдены в файле .env. Функция отправки Email не будет работать.');
+    console.warn('Необходимо указать EMAIL_USER и EMAIL_PASS в .env файле');
   }
 } catch (error) {
   console.error('Ошибка при настройке транспорта email:', error);
@@ -89,7 +94,7 @@ app.post('/api/send-recording', upload.single('audio'), async (req, res) => {
 
     if (method === 'email' && email && emailTransporter) {
       // Отправка по email
-      result = await sendEmail(email, filePath);
+      result = await sendEmail(email, filePath, req.file.originalname, req.file.mimetype);
     } else if (method === 'telegram' && telegramBot) {
       // Получаем Telegram username или chat_id из запроса
       const chatId = req.body.chatId || process.env.TELEGRAM_DEFAULT_CHAT_ID;
@@ -119,12 +124,14 @@ app.post('/api/send-recording', upload.single('audio'), async (req, res) => {
 });
 
 // Функция отправки на email
-async function sendEmail(email, filePath) {
+async function sendEmail(email, filePath, originalName, mimeType) {
   if (!emailTransporter) {
     return { success: false, error: 'Транспорт email не настроен' };
   }
 
   try {
+    const ext = path.extname(filePath) || (mimeType === 'audio/mpeg' ? '.mp3' : '.webm');
+    const attachName = originalName && originalName.trim().length > 0 ? originalName : `recording${ext}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -132,8 +139,9 @@ async function sendEmail(email, filePath) {
       text: 'Прикрепляем вашу запись из онлайн-сэмплера',
       attachments: [
         {
-          filename: 'recording.webm',
-          path: filePath
+          filename: attachName,
+          path: filePath,
+          contentType: mimeType || undefined
         }
       ]
     };
@@ -192,3 +200,4 @@ app.listen(port, () => {
   console.log(`Сервер запущен на порту ${port}`);
   console.log(`Откройте http://localhost:${port} в браузере`);
 });
+

@@ -1212,7 +1212,22 @@
                 }
 
                 const formData = new FormData();
-                formData.append('audio', this.recordingBlob, 'recording.webm');
+
+                let fileToSend = this.recordingBlob;
+                let filename = 'recording.webm';
+                if (method === 'email') {
+                    try {
+                        this.showStatus('Converting recording to MP3...', 'success');
+                        const mp3Blob = await this.convertToMp3(this.recordingBlob);
+                        fileToSend = mp3Blob;
+                        filename = 'recording.mp3';
+                    } catch (err) {
+                        console.error('MP3 conversion failed, sending original:', err);
+                        this.showStatus('MP3 conversion failed, sending original format', 'error');
+                    }
+                }
+
+                formData.append('audio', fileToSend, filename);
                 formData.append('method', method);
 
                 if (method === 'email') {
