@@ -12,31 +12,33 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            background: #000000;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            color: #ffffff;
         }
 
         .sampler-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            max-width: 600px;
+            background: #ffffff;
+            border: 2px solid #000000;
+            padding: 60px 40px;
+            max-width: 700px;
             width: 100%;
+            position: relative;
         }
 
         h1 {
             text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            font-weight: 300;
+            color: #000000;
+            margin-bottom: 40px;
+            font-size: 3em;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
         }
 
         .sampler-grid {
@@ -56,48 +58,50 @@
         .sample-pad {
             width: 80px;
             height: 80px;
-            border: none;
-            border-radius: 50%;
-            background: linear-gradient(145deg, #e6e6e6, #ffffff);
-            box-shadow: 5px 5px 10px #d1d1d1, -5px -5px 10px #ffffff;
+            border: 3px solid #000000;
+            border-radius: 0;
+            background: #ffffff;
             cursor: pointer;
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #666;
-            transition: all 0.2s ease;
+            font-size: 1.4em;
+            font-weight: 900;
+            color: #000000;
+            transition: all 0.15s ease;
             position: relative;
-            overflow: hidden;
+            text-transform: uppercase;
         }
 
         .sample-pad:hover {
-            transform: translateY(-2px);
-            box-shadow: 7px 7px 15px #d1d1d1, -7px -7px 15px #ffffff;
+            background: #000000;
+            color: #ffffff;
+            transform: scale(1.05);
         }
 
         .sample-pad:active,
         .sample-pad.playing {
-            background: linear-gradient(145deg, #ff6b6b, #ff5252);
-            color: white;
-            transform: scale(0.95);
-            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.2);
+            background: #000000;
+            color: #ffffff;
+            transform: scale(0.9);
+            border-width: 5px;
         }
 
         .sample-pad.loaded {
-            background: linear-gradient(145deg, #4ecdc4, #44b3a3);
-            color: white;
+            background: #ffffff;
+            color: #000000;
+            border-width: 5px;
         }
 
         .sample-pad.loaded:hover {
-            background: linear-gradient(145deg, #26d0ce, #1ba39c);
+            background: #000000;
+            color: #ffffff;
         }
 
         .pitch-slider {
             width: 80px;
             -webkit-appearance: none;
             appearance: none;
-            height: 6px;
-            border-radius: 3px;
-            background: #ddd;
+            height: 4px;
+            border-radius: 0;
+            background: #000000;
             outline: none;
             transition: background 0.3s;
         }
@@ -105,32 +109,36 @@
         .pitch-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #667eea;
+            width: 20px;
+            height: 20px;
+            border-radius: 0;
+            background: #ffffff;
+            border: 2px solid #000000;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .pitch-slider::-webkit-slider-thumb:hover {
-            background: #5a6fd8;
-            transform: scale(1.1);
+            background: #000000;
+            transform: scale(1.2);
         }
 
         .pitch-slider::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #667eea;
+            width: 20px;
+            height: 20px;
+            border-radius: 0;
+            background: #ffffff;
             cursor: pointer;
-            border: none;
+            border: 2px solid #000000;
         }
 
         .pitch-label {
-            font-size: 0.8em;
-            color: #666;
+            font-size: 0.7em;
+            color: #000000;
             text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .controls-section {
@@ -141,49 +149,54 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 20px;
             margin-bottom: 20px;
-            padding: 20px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 15px;
+            padding: 25px;
+            background: #ffffff;
+            border: 2px solid #000000;
         }
 
         .reverb-label {
-            font-weight: 600;
-            color: #333;
-            min-width: 80px;
+            font-weight: 900;
+            color: #000000;
+            min-width: 100px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9em;
         }
 
         .reverb-slider {
             width: 200px;
             -webkit-appearance: none;
             appearance: none;
-            height: 8px;
-            border-radius: 4px;
-            background: #ddd;
+            height: 6px;
+            border-radius: 0;
+            background: #000000;
             outline: none;
         }
 
         .reverb-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #667eea;
+            width: 24px;
+            height: 24px;
+            border-radius: 0;
+            background: #ffffff;
+            border: 2px solid #000000;
             cursor: pointer;
             transition: all 0.3s;
         }
 
         .reverb-slider::-webkit-slider-thumb:hover {
-            background: #5a6fd8;
-            transform: scale(1.1);
+            background: #000000;
+            transform: scale(1.2);
         }
 
         .reverb-value {
-            font-weight: bold;
-            color: #667eea;
-            min-width: 30px;
+            font-weight: 900;
+            color: #000000;
+            min-width: 40px;
+            font-size: 1.1em;
         }
 
         .recording-section {
@@ -199,62 +212,195 @@
             align-items: center;
         }
 
-        .record-btn,
-        .stop-btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
+        .record-stop-btn {
+            padding: 15px 30px;
+            border: 3px solid #000000;
+            border-radius: 0;
+            font-size: 1.1em;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            min-width: 160px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: #ff0000;
+            color: #ffffff;
+        }
+
+        .record-stop-btn:hover:not(:disabled) {
+            background: #ffffff;
+            color: #ff0000;
+            transform: scale(1.05);
+        }
+
+        .record-stop-btn:disabled {
+            background: #cccccc;
+            color: #666666;
+            cursor: not-allowed;
+            border-color: #cccccc;
+        }
+
+        .record-stop-btn.recording {
+            animation: pulse 1s ease-in-out infinite alternate;
+            background: #ff0000;
+        }
+
+        .panic-btn {
+            background: #000000;
+            color: #ffffff;
+            border: 3px solid #000000;
+            border-radius: 0;
+            width: 120px;
+            height: 40px;
+            font-size: 0.8em;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin: 30px auto;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .panic-btn:hover {
+            background: #ffffff;
+            color: #000000;
+            transform: scale(1.05);
+        }
+
+        .panic-btn:active {
+            transform: scale(0.95);
+            border-width: 5px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 0;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            background-color: #ffffff;
+            border: 2px solid #000000;
+            border-bottom: none;
+            border-right: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.15s ease;
+        }
+
+        .tab:last-child {
+            border-right: 2px solid #000000;
+        }
+
+        .tab:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        .tab.active {
+            background-color: #000000;
+            color: #ffffff;
+            border-bottom: 2px solid #000000;
+            z-index: 2;
+            position: relative;
+        }
+
+        .tab-content {
+            border: 2px solid #000000;
+            padding: 20px;
+            background-color: #ffffff;
+            margin-top: 0;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .share-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .share-container h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #000000;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        input[type="email"], input[type="text"] {
+            padding: 15px;
+            border: 2px solid #000000;
+            border-radius: 0;
+            width: 100%;
+            margin-bottom: 15px;
             font-size: 1em;
             font-weight: 600;
+            background: #ffffff;
+            color: #000000;
+        }
+
+        .share-btn {
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            padding: 15px 20px;
+            border-radius: 0;
             cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 120px;
+            font-size: 1em;
+            font-weight: 900;
+            transition: all 0.15s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .record-btn {
-            background: linear-gradient(145deg, #ff6b6b, #ff5252);
-            color: white;
+        .share-btn:hover {
+            background: #ffffff;
+            color: #000000;
+            transform: scale(1.02);
         }
 
-        .record-btn:hover:not(:disabled) {
-            background: linear-gradient(145deg, #ff5252, #ff1744);
-            transform: translateY(-2px);
-        }
-
-        .record-btn:disabled {
-            background: #ccc;
+        .share-btn:disabled {
+            background: #cccccc;
+            color: #666666;
+            border-color: #cccccc;
             cursor: not-allowed;
+            transform: none;
         }
 
-        .record-btn.recording {
-            animation: pulse 1.5s ease-in-out infinite alternate;
-        }
-
-        .stop-btn {
-            background: linear-gradient(145deg, #78909c, #607d8b);
-            color: white;
-        }
-
-        .stop-btn:hover:not(:disabled) {
-            background: linear-gradient(145deg, #607d8b, #455a64);
-            transform: translateY(-2px);
-        }
-
-        .stop-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+        .download-info {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #000000;
+            font-size: 1em;
+            font-weight: 600;
         }
 
         .timer {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #333;
+            font-size: 2em;
+            font-weight: 900;
+            color: #000000;
             font-family: 'Courier New', monospace;
+            text-align: center;
+            margin: 20px 0;
         }
 
         .timer.recording {
-            color: #ff5252;
-            animation: blink 1s ease-in-out infinite alternate;
+            color: #ff0000;
+            animation: blink 0.8s ease-in-out infinite alternate;
         }
 
         .recorded-audio {
@@ -264,36 +410,49 @@
         }
 
         .instructions {
-            margin-top: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 15px;
+            margin-top: 40px;
+            padding: 25px;
+            background: #ffffff;
+            border: 2px solid #000000;
             text-align: center;
-            color: #666;
+            color: #000000;
         }
 
         .instructions h3 {
-            margin-bottom: 10px;
-            color: #333;
+            margin-bottom: 15px;
+            color: #000000;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .instructions p {
+            font-weight: 600;
+            margin: 8px 0;
         }
 
         .status-message {
             text-align: center;
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 10px;
-            font-weight: 500;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 0;
+            font-weight: 700;
             display: none;
+            border: 2px solid #000000;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .status-message.error {
-            background: rgba(255, 107, 107, 0.2);
-            color: #d32f2f;
+            background: #ffffff;
+            color: #ff0000;
+            border-color: #ff0000;
         }
 
         .status-message.success {
-            background: rgba(76, 175, 80, 0.2);
-            color: #388e3c;
+            background: #ffffff;
+            color: #000000;
+            border-color: #000000;
         }
 
         @keyframes pulse {
@@ -385,19 +544,55 @@
 
         <div class="controls-section">
             <div class="reverb-control">
+                <label class="reverb-label">Volume:</label>
+                <input type="range" class="reverb-slider" id="volumeSlider" min="0" max="1" step="0.05" value="0.7">
+                <span class="reverb-value" id="volumeValue">0.7</span>
+            </div>
+            <div class="reverb-control">
                 <label class="reverb-label">Reverb:</label>
                 <input type="range" class="reverb-slider" id="reverbSlider" min="0" max="1" step="0.1" value="0.3">
                 <span class="reverb-value" id="reverbValue">0.3</span>
             </div>
         </div>
 
+        <button class="panic-btn" id="panicBtn">STOP ALL</button>
+
         <div class="recording-section">
             <div class="recording-controls">
-                <button class="record-btn" id="recordBtn">Record (30s)</button>
-                <button class="stop-btn" id="stopBtn" disabled>Stop</button>
+                <button class="record-stop-btn" id="recordStopBtn">Record (30s)</button>
             </div>
             <div class="timer" id="timer">00:00</div>
             <audio class="recorded-audio" id="recordedAudio" controls style="display: none;"></audio>
+        </div>
+
+        <div class="share-container" id="shareContainer" style="display: none;">
+            <h3>Share Recording</h3>
+
+            <div class="tabs">
+                <div class="tab active" data-tab="email-tab">Email</div>
+                <div class="tab" data-tab="telegram-tab">Telegram</div>
+                <div class="tab" data-tab="download-tab">Download</div>
+            </div>
+
+            <div class="tab-content">
+                <div class="tab-pane active" id="email-tab">
+                    <input type="email" id="emailInput" placeholder="Enter email address">
+                    <button class="share-btn" id="sendEmailButton">Send to Email</button>
+                </div>
+
+                <div class="tab-pane" id="telegram-tab">
+                    <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;">Enter Telegram username or chat ID:</p>
+                    <input type="text" id="telegramInput" placeholder="@username or chat ID">
+                    <button class="share-btn" id="sendTelegramButton">Send to Telegram</button>
+                </div>
+
+                <div class="tab-pane" id="download-tab">
+                    <div class="download-info">
+                        <p>Download your recording as WebM file</p>
+                    </div>
+                    <button class="share-btn" id="downloadButton">Download Recording</button>
+                </div>
+            </div>
         </div>
 
         <div class="status-message" id="statusMessage"></div>
@@ -406,7 +601,9 @@
             <h3>Instructions</h3>
             <p>• Click sample buttons or use keys 1-5 to play sounds</p>
             <p>• Adjust pitch sliders to change playback speed</p>
+            <p>• Use volume control to adjust overall level</p>
             <p>• Use reverb control to add ambient effect</p>
+            <p>• Red STOP ALL button stops all playing sounds instantly</p>
             <p>• Click Record to capture 30 seconds of audio</p>
         </div>
     </div>
@@ -418,11 +615,14 @@
                 this.samples = new Array(5).fill(null);
                 this.pitchValues = new Array(5).fill(1.0);
                 this.reverbAmount = 0.3;
+                this.volumeLevel = 0.7;
                 this.isRecording = false;
                 this.recordingTime = 0;
                 this.mediaRecorder = null;
                 this.recordedChunks = [];
                 this.recordingInterval = null;
+                this.activeSources = [];
+                this.recordingBlob = null;
 
                 this.init();
             }
@@ -432,6 +632,7 @@
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     this.setupAudioNodes();
                     this.setupEventListeners();
+                    this.setupTabHandling();
                     await this.loadSamples();
                     this.showStatus('Sampler ready! Click pads or use keys 1-5', 'success');
                 } catch (error) {
@@ -441,7 +642,7 @@
 
             setupAudioNodes() {
                 this.masterGain = this.audioContext.createGain();
-                this.masterGain.gain.value = 0.7;
+                this.masterGain.gain.value = this.volumeLevel;
 
                 this.dryGain = this.audioContext.createGain();
                 this.wetGain = this.audioContext.createGain();
@@ -530,6 +731,15 @@
                 source.connect(this.masterGain);
                 source.start(0);
 
+                this.activeSources.push(source);
+
+                source.onended = () => {
+                    const sourceIndex = this.activeSources.indexOf(source);
+                    if (sourceIndex > -1) {
+                        this.activeSources.splice(sourceIndex, 1);
+                    }
+                };
+
                 this.animatePad(index, source.buffer.duration / this.pitchValues[index]);
             }
 
@@ -557,7 +767,39 @@
                 oscillator.start(now);
                 oscillator.stop(now + duration);
 
+                this.activeSources.push(oscillator);
+
+                oscillator.onended = () => {
+                    const sourceIndex = this.activeSources.indexOf(oscillator);
+                    if (sourceIndex > -1) {
+                        this.activeSources.splice(sourceIndex, 1);
+                    }
+                };
+
                 this.animatePad(index, duration);
+            }
+
+            panicStop() {
+                this.activeSources.forEach(source => {
+                    try {
+                        if (source.stop) {
+                            source.stop();
+                        }
+                        if (source.disconnect) {
+                            source.disconnect();
+                        }
+                    } catch (error) {
+                        console.log('Error stopping source:', error);
+                    }
+                });
+
+                this.activeSources = [];
+
+                document.querySelectorAll('.sample-pad').forEach(pad => {
+                    pad.classList.remove('playing');
+                });
+
+                this.showStatus('All sounds stopped', 'success');
             }
 
             animatePad(index, duration) {
@@ -580,8 +822,16 @@
                     });
                 });
 
+                const volumeSlider = document.getElementById('volumeSlider');
+                const volumeValue = document.getElementById('volumeValue');
                 const reverbSlider = document.getElementById('reverbSlider');
                 const reverbValue = document.getElementById('reverbValue');
+
+                volumeSlider.addEventListener('input', (e) => {
+                    this.volumeLevel = parseFloat(e.target.value);
+                    volumeValue.textContent = this.volumeLevel.toFixed(2);
+                    this.masterGain.gain.value = this.volumeLevel;
+                });
 
                 reverbSlider.addEventListener('input', (e) => {
                     this.reverbAmount = parseFloat(e.target.value);
@@ -596,13 +846,124 @@
                     }
                 });
 
-                document.getElementById('recordBtn').addEventListener('click', () => {
-                    this.startRecording();
+                document.getElementById('recordStopBtn').addEventListener('click', () => {
+                    if (this.isRecording) {
+                        this.stopRecording();
+                    } else {
+                        this.startRecording();
+                    }
                 });
 
-                document.getElementById('stopBtn').addEventListener('click', () => {
-                    this.stopRecording();
+                document.getElementById('panicBtn').addEventListener('click', () => {
+                    this.panicStop();
                 });
+            }
+
+            setupTabHandling() {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+
+                        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                        const tabId = this.getAttribute('data-tab');
+                        document.getElementById(tabId).classList.add('active');
+                    });
+                });
+
+                document.getElementById('sendEmailButton').addEventListener('click', () => {
+                    this.sendRecording('email');
+                });
+
+                document.getElementById('sendTelegramButton').addEventListener('click', () => {
+                    this.sendRecording('telegram');
+                });
+
+                document.getElementById('downloadButton').addEventListener('click', () => {
+                    this.downloadRecording();
+                });
+            }
+
+            async sendRecording(method) {
+                if (!this.recordingBlob) {
+                    this.showStatus('No recording available to send!', 'error');
+                    return;
+                }
+
+                let destination = '';
+                let buttonElement = null;
+
+                if (method === 'email') {
+                    destination = document.getElementById('emailInput').value;
+                    buttonElement = document.getElementById('sendEmailButton');
+                    if (!destination) {
+                        this.showStatus('Please enter an email address', 'error');
+                        return;
+                    }
+                } else if (method === 'telegram') {
+                    destination = document.getElementById('telegramInput').value;
+                    buttonElement = document.getElementById('sendTelegramButton');
+                    if (!destination) {
+                        this.showStatus('Please enter a Telegram username or chat ID', 'error');
+                        return;
+                    }
+                }
+
+                const formData = new FormData();
+                formData.append('audio', this.recordingBlob, 'recording.webm');
+                formData.append('method', method);
+
+                if (method === 'email') {
+                    formData.append('email', destination);
+                } else if (method === 'telegram') {
+                    if (destination.startsWith('@')) {
+                        formData.append('username', destination.substring(1));
+                    } else {
+                        formData.append('chatId', destination);
+                    }
+                }
+
+                const originalText = buttonElement.textContent;
+                buttonElement.textContent = 'Sending...';
+                buttonElement.disabled = true;
+
+                try {
+                    const response = await fetch('/api/send-recording', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.showStatus(`Recording sent successfully via ${method}!`, 'success');
+                    } else {
+                        this.showStatus(`Error sending recording: ${data.error || 'Unknown error'}`, 'error');
+                    }
+                } catch (error) {
+                    this.showStatus(`Error sending recording: ${error.message}`, 'error');
+                } finally {
+                    buttonElement.textContent = originalText;
+                    buttonElement.disabled = false;
+                }
+            }
+
+            downloadRecording() {
+                if (!this.recordingBlob) {
+                    this.showStatus('No recording available to download!', 'error');
+                    return;
+                }
+
+                const url = URL.createObjectURL(this.recordingBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'sampler-recording.webm';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.showStatus('Download started!', 'success');
             }
 
             async startRecording() {
@@ -629,13 +990,11 @@
                     this.mediaRecorder.start(100);
                     this.isRecording = true;
 
-                    const recordBtn = document.getElementById('recordBtn');
-                    const stopBtn = document.getElementById('stopBtn');
+                    const recordStopBtn = document.getElementById('recordStopBtn');
                     const timer = document.getElementById('timer');
 
-                    recordBtn.disabled = true;
-                    recordBtn.classList.add('recording');
-                    stopBtn.disabled = false;
+                    recordStopBtn.textContent = 'Stop Recording';
+                    recordStopBtn.classList.add('recording');
                     timer.classList.add('recording');
 
                     this.recordingInterval = setInterval(() => {
@@ -663,13 +1022,11 @@
                         this.recordingInterval = null;
                     }
 
-                    const recordBtn = document.getElementById('recordBtn');
-                    const stopBtn = document.getElementById('stopBtn');
+                    const recordStopBtn = document.getElementById('recordStopBtn');
                     const timer = document.getElementById('timer');
 
-                    recordBtn.disabled = false;
-                    recordBtn.classList.remove('recording');
-                    stopBtn.disabled = true;
+                    recordStopBtn.textContent = 'Record (30s)';
+                    recordStopBtn.classList.remove('recording');
                     timer.classList.remove('recording');
 
                     this.showStatus('Recording stopped', 'success');
@@ -677,33 +1034,19 @@
             }
 
             handleRecordingComplete() {
-                const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
-                const url = URL.createObjectURL(blob);
+                this.recordingBlob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(this.recordingBlob);
 
                 const audioElement = document.getElementById('recordedAudio');
                 audioElement.src = url;
                 audioElement.style.display = 'block';
 
-                const downloadLink = document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = 'sampler-recording.webm';
-                downloadLink.textContent = 'Download Recording';
-                downloadLink.style.marginTop = '10px';
-                downloadLink.style.display = 'block';
-                downloadLink.style.textAlign = 'center';
-                downloadLink.style.color = '#667eea';
-                downloadLink.style.textDecoration = 'none';
-                downloadLink.style.fontWeight = 'bold';
-
-                const existingLink = document.querySelector('a[download]');
-                if (existingLink) {
-                    existingLink.remove();
-                }
-
-                document.querySelector('.recording-section').appendChild(downloadLink);
+                const shareContainer = document.getElementById('shareContainer');
+                shareContainer.style.display = 'block';
 
                 this.recordingTime = 0;
                 this.updateTimer();
+                this.showStatus('Recording complete! Use the tabs below to share or download.', 'success');
             }
 
             updateTimer() {
