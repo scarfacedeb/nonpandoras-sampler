@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audio Sampler</title>
+    <script src="https://unpkg.com/lamejs@1.2.0/lame.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -697,6 +698,11 @@
                 <span class="reverb-value" id="volumeValue">0.7</span>
             </div>
             <div class="reverb-control">
+                <label class="reverb-label">Delay:</label>
+                <input type="range" class="reverb-slider" id="delaySlider" min="0" max="0.8" step="0.05" value="0.0">
+                <span class="reverb-value" id="delayValue">0.0s</span>
+            </div>
+            <div class="reverb-control">
                 <label class="reverb-label">Reverb:</label>
                 <input type="range" class="reverb-slider" id="reverbSlider" min="0" max="1" step="0.1" value="0.3">
                 <span class="reverb-value" id="reverbValue">0.3</span>
@@ -750,6 +756,7 @@
             <p>• Click sample buttons or use keys 1-5 to play sounds</p>
             <p>• Adjust pitch sliders to change playback speed</p>
             <p>• Use volume control to adjust overall level</p>
+            <p>• Use delay control to add echo effects</p>
             <p>• Use reverb control to add ambient effect</p>
             <p>• Red STOP ALL button stops all playing sounds instantly</p>
             <p>• Click Record to capture 30 seconds of audio</p>
@@ -763,6 +770,7 @@
                 this.samples = new Array(5).fill(null);
                 this.pitchValues = new Array(5).fill(1.0);
                 this.reverbAmount = 0.3;
+                this.delayAmount = 0.0;
                 this.volumeLevel = 0.7;
                 this.isRecording = false;
                 this.recordingTime = 0;
@@ -792,20 +800,43 @@
                 this.masterGain = this.audioContext.createGain();
                 this.masterGain.gain.value = this.volumeLevel;
 
-                this.dryGain = this.audioContext.createGain();
-                this.wetGain = this.audioContext.createGain();
+                // Delay effect setup
+                this.delayNode = this.audioContext.createDelay(1.0); // Max 1 second delay
+                this.delayNode.delayTime.value = 0.0; // Start with no delay
+                this.delayFeedback = this.audioContext.createGain();
+                this.delayFeedback.gain.value = 0.3; // Feedback amount
+                this.delayWet = this.audioContext.createGain();
+                this.delayDry = this.audioContext.createGain();
 
+                // Delay routing
+                this.delayNode.connect(this.delayFeedback);
+                this.delayFeedback.connect(this.delayNode); // Feedback loop
+                this.delayNode.connect(this.delayWet);
+
+                // Reverb setup
+                this.reverbDry = this.audioContext.createGain();
+                this.reverbWet = this.audioContext.createGain();
                 this.convolver = this.audioContext.createConvolver();
                 this.createReverbImpulse();
 
-                this.masterGain.connect(this.dryGain);
-                this.masterGain.connect(this.convolver);
-                this.convolver.connect(this.wetGain);
+                // Audio routing: Master -> Delay -> Reverb -> Output
+                this.masterGain.connect(this.delayDry);
+                this.masterGain.connect(this.delayNode);
 
-                this.dryGain.connect(this.audioContext.destination);
-                this.wetGain.connect(this.audioContext.destination);
+                // Mix delay dry/wet
+                this.delayDry.connect(this.reverbDry);
+                this.delayWet.connect(this.reverbDry);
 
-                this.updateReverbMix();
+                // Reverb processing
+                this.reverbDry.connect(this.reverbWet);
+                this.reverbDry.connect(this.convolver);
+                this.convolver.connect(this.reverbWet);
+
+                // Final output
+                this.reverbDry.connect(this.audioContext.destination);
+                this.reverbWet.connect(this.audioContext.destination);
+
+                this.updateEffectsMix();
             }
 
             createReverbImpulse() {
@@ -823,9 +854,17 @@
                 this.convolver.buffer = impulse;
             }
 
-            updateReverbMix() {
-                this.dryGain.gain.value = 1 - this.reverbAmount * 0.5;
-                this.wetGain.gain.value = this.reverbAmount;
+            updateEffectsMix() {
+                // Update delay time (delayAmount now directly controls delay time)
+                this.delayNode.delayTime.value = this.delayAmount;
+
+                // Delay wet amount based on whether delay is active
+                this.delayDry.gain.value = 1.0;
+                this.delayWet.gain.value = this.delayAmount > 0 ? 0.4 : 0.0;
+
+                // Reverb mix (applied after delay)
+                this.reverbDry.gain.value = 1 - this.reverbAmount * 0.5;
+                this.reverbWet.gain.value = this.reverbAmount;
             }
 
             async loadSamples() {
@@ -1036,6 +1075,8 @@
 
                 const volumeSlider = document.getElementById('volumeSlider');
                 const volumeValue = document.getElementById('volumeValue');
+                const delaySlider = document.getElementById('delaySlider');
+                const delayValue = document.getElementById('delayValue');
                 const reverbSlider = document.getElementById('reverbSlider');
                 const reverbValue = document.getElementById('reverbValue');
 
@@ -1045,10 +1086,16 @@
                     this.masterGain.gain.value = this.volumeLevel;
                 });
 
+                delaySlider.addEventListener('input', (e) => {
+                    this.delayAmount = parseFloat(e.target.value);
+                    delayValue.textContent = this.delayAmount.toFixed(2);
+                    this.updateEffectsMix();
+                });
+
                 reverbSlider.addEventListener('input', (e) => {
                     this.reverbAmount = parseFloat(e.target.value);
                     reverbValue.textContent = this.reverbAmount.toFixed(1);
-                    this.updateReverbMix();
+                    this.updateEffectsMix();
                 });
 
                 document.addEventListener('keydown', (e) => {
@@ -1178,30 +1225,124 @@
                 }
             }
 
-            downloadRecording() {
+            async convertToMp3(audioBlob) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = async () => {
+                        try {
+                            const arrayBuffer = reader.result;
+                            const tempAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+                            const audioData = await tempAudioContext.decodeAudioData(arrayBuffer);
+
+                            const channels = audioData.numberOfChannels;
+                            const sampleRate = audioData.sampleRate;
+                            const length = audioData.length;
+
+                            // Convert float samples to 16-bit integers
+                            function floatTo16BitPCM(input) {
+                                const buffer = new Int16Array(input.length);
+                                for (let i = 0; i < input.length; i++) {
+                                    const sample = Math.max(-1, Math.min(1, input[i]));
+                                    buffer[i] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                                }
+                                return buffer;
+                            }
+
+                            // Initialize MP3 encoder
+                            const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
+                            const mp3Data = [];
+
+                            const sampleBlockSize = 1152;
+
+                            if (channels === 1) {
+                                // Mono audio
+                                const samples = audioData.getChannelData(0);
+                                const pcmSamples = floatTo16BitPCM(samples);
+
+                                for (let i = 0; i < pcmSamples.length; i += sampleBlockSize) {
+                                    const sampleChunk = pcmSamples.subarray(i, i + sampleBlockSize);
+                                    const mp3buf = mp3encoder.encodeBuffer(sampleChunk);
+                                    if (mp3buf.length > 0) {
+                                        mp3Data.push(mp3buf);
+                                    }
+                                }
+                            } else {
+                                // Stereo audio
+                                const leftSamples = floatTo16BitPCM(audioData.getChannelData(0));
+                                const rightSamples = floatTo16BitPCM(audioData.getChannelData(1));
+
+                                for (let i = 0; i < leftSamples.length; i += sampleBlockSize) {
+                                    const leftChunk = leftSamples.subarray(i, i + sampleBlockSize);
+                                    const rightChunk = rightSamples.subarray(i, i + sampleBlockSize);
+                                    const mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+                                    if (mp3buf.length > 0) {
+                                        mp3Data.push(mp3buf);
+                                    }
+                                }
+                            }
+
+                            // Flush remaining data
+                            const mp3buf = mp3encoder.flush();
+                            if (mp3buf.length > 0) {
+                                mp3Data.push(mp3buf);
+                            }
+
+                            // Close the temporary audio context
+                            tempAudioContext.close();
+
+                            const mp3Blob = new Blob(mp3Data, { type: 'audio/mpeg' });
+                            resolve(mp3Blob);
+                        } catch (error) {
+                            console.error('MP3 conversion error:', error);
+                            reject(error);
+                        }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(audioBlob);
+                });
+            }
+
+            async downloadRecording() {
                 if (!this.recordingBlob) {
                     this.showStatus('No recording available to download!', 'error');
                     return;
                 }
 
-                const url = URL.createObjectURL(this.recordingBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'sampler-recording.webm';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                try {
+                    this.showStatus('Converting to MP3...', 'success');
+                    const mp3Blob = await this.convertToMp3(this.recordingBlob);
 
-                this.showStatus('Download started!', 'success');
+                    const url = URL.createObjectURL(mp3Blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'sampler-recording.mp3';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    this.showStatus('MP3 download started!', 'success');
+                } catch (error) {
+                    console.error('Error converting to MP3:', error);
+                    this.showStatus('Error converting to MP3. Downloading original format...', 'error');
+
+                    // Fallback to original format
+                    const url = URL.createObjectURL(this.recordingBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'sampler-recording.webm';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
             }
 
             async startRecording() {
                 try {
                     const stream = this.audioContext.createMediaStreamDestination();
-                    this.masterGain.connect(stream);
-                    this.dryGain.connect(stream);
-                    this.wetGain.connect(stream);
+                    this.reverbDry.connect(stream);
+                    this.reverbWet.connect(stream);
 
                     this.mediaRecorder = new MediaRecorder(stream.stream);
                     this.recordedChunks = [];
