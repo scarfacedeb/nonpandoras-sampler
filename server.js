@@ -27,9 +27,15 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
-    const extFromOriginal = path.extname(file.originalname || '')
-    let ext = extFromOriginal && extFromOriginal.length > 0 ? extFromOriginal : (file.mimetype === 'audio/mpeg' ? '.mp3' : '.webm');
-    if (!ext) ext = '.webm';
+    const extFromOriginal = path.extname(file.originalname || '');
+    let ext = extFromOriginal && extFromOriginal.length > 0 ? extFromOriginal : null;
+    if (!ext) {
+      // Infer by mimetype
+      if (file.mimetype === 'audio/mpeg') ext = '.mp3';
+      else if (file.mimetype === 'audio/ogg') ext = '.ogg';
+      else if (file.mimetype === 'audio/webm') ext = '.webm';
+      else ext = '.webm';
+    }
     const uniqueFilename = `${uuidv4()}${ext}`;
     cb(null, uniqueFilename);
   }
@@ -100,18 +106,20 @@ app.post('/api/send-recording', upload.single('audio'), async (req, res) => {
     if (method === 'email' && email && emailTransporter) {
       // Отправка по email
       result = await sendEmail(email, filePath, req.file.originalname, req.file.mimetype);
-    } else if (method === 'telegram' && telegramBot) {
-      // Получаем Telegram username или chat_id из запроса
-      const chatId = req.body.chatId || process.env.TELEGRAM_DEFAULT_CHAT_ID;
-      
+    } else if ((method === 'telegram' || method === 'telegram_voice') && telegramBot) {
+      // Группа/канал для отправки: берем из запроса или из переменных окружения
+      const chatId = req.body.chatId || process.env.TELEGRAM_GROUP_ID || process.env.TELEGRAM_DEFAULT_CHAT_ID || '-1003175867730';
+      const caption = (req.body.message ? String(req.body.message).slice(0, 1024) : undefined);
+
       if (!chatId) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Необходимо указать chatId для отправки в Telegram'
-        });
+        return res.status(400).json({ success: false, error: 'Не указан chatId и не настроен TELEGRAM_GROUP_ID' });
       }
-      
-      result = await sendTelegram(chatId, filePath);
+
+      if (method === 'telegram_voice') {
+        result = await sendTelegramVoice(chatId, filePath, caption);
+      } else {
+        result = await sendTelegram(chatId, filePath, caption);
+      }
     }
 
     // Удаляем временный файл после отправки
@@ -161,19 +169,37 @@ async function sendEmail(email, filePath, originalName, mimeType) {
 }
 
 // Функция отправки в Telegram
-async function sendTelegram(chatId, filePath) {
+async function sendTelegram(chatId, filePath, caption) {
   if (!telegramBot) {
     return { success: false, error: 'Telegram бот не настроен' };
   }
 
   try {
     const response = await telegramBot.sendAudio(chatId, fs.createReadStream(filePath), {
-      caption: 'Ваша запись из онлайн-сэмплера'
+      caption: caption || 'Ваша запись из онлайн-сэмплера'
     });
     console.log('Отправлено в Telegram, message_id:', response.message_id);
     return { success: true, messageId: response.message_id };
   } catch (error) {
     console.error('Ошибка при отправке в Telegram:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Отправка голосового сообщения (OGG/Opus)
+async function sendTelegramVoice(chatId, filePath, caption) {
+  if (!telegramBot) {
+    return { success: false, error: 'Telegram бот не настроен' };
+  }
+
+  try {
+    const response = await telegramBot.sendVoice(chatId, fs.createReadStream(filePath), {
+      caption: caption || 'Голосовое сообщение из онлайн-сэмплера'
+    });
+    console.log('Voice отправлено в Telegram, message_id:', response.message_id);
+    return { success: true, messageId: response.message_id };
+  } catch (error) {
+    console.error('Ошибка при отправке voice в Telegram:', error);
     return { success: false, error: error.message };
   }
 }

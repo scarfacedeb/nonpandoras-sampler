@@ -1220,6 +1220,7 @@
                 this.delayAmount = 0.0;
                 this.volumeLevel = 0.7;
                 this.isRecording = false;
+                this.recordingHadAudio = false;
                 this.recordingTime = 0;
                 this.mediaRecorder = null;
                 this.recordedChunks = [];
@@ -1480,6 +1481,9 @@
                     const cx = r.left + r.width/2;
                     const cy = r.top + r.height/2;
                     window.__addRepulse(cx, cy, 1200, 280, 0.6);
+                    if (window.__addFullscreenBurst) {
+                        window.__addFullscreenBurst(cx, cy);
+                    }
                 }
             }
 
@@ -1489,6 +1493,7 @@
                 source.playbackRate.value = this.pitchValues[index];
 
                 source.connect(this.masterGain);
+                if (this.isRecording) this.recordingHadAudio = true;
                 source.start(0);
 
                 this.activeSources.push(source);
@@ -1535,6 +1540,7 @@
 
                 oscillator.connect(gainNode);
                 gainNode.connect(this.masterGain);
+                if (this.isRecording) this.recordingHadAudio = true;
 
                 oscillator.start(now);
                 oscillator.stop(now + duration);
@@ -1570,6 +1576,20 @@
                 document.querySelectorAll('.sample-pad').forEach(pad => {
                     pad.classList.remove('playing');
                 });
+
+                // Immediately kill delay/reverb tails (and FX chain output)
+                try {
+                    if (this.delayFeedback) this.delayFeedback.gain.value = 0;
+                    if (this.delayWet) this.delayWet.gain.value = 0;
+                    if (this.delayNode) this.delayNode.delayTime.value = 0;
+                    if (this.reverbDry) this.reverbDry.gain.value = 0;
+                    if (this.reverbWet) this.reverbWet.gain.value = 0;
+                } catch (e) {}
+
+                // Restore effect mixes after a short moment based on sliders
+                setTimeout(() => {
+                    try { this.updateEffectsMix(); } catch (e) {}
+                }, 120);
 
                 this.showStatus('All sounds stopped', 'success');
             }
@@ -1950,6 +1970,7 @@
 
                     this.mediaRecorder.start(100);
                     this.isRecording = true;
+                    this.recordingHadAudio = false;
 
                     const recordStopBtn = document.getElementById('recordStopBtn');
                     const timer = document.getElementById('timer');
@@ -2003,12 +2024,24 @@
                 audioElement.style.display = 'block';
 
                 const shareContainer = document.getElementById('shareContainer');
-                shareContainer.classList.add('show');
-                shareContainer.style.display = 'block';
+                const minimalBytes = 1500;
+                const hadAudio = this.recordingHadAudio || (this.recordingBlob && this.recordingBlob.size > minimalBytes);
+                if (hadAudio) {
+                    shareContainer.classList.add('show');
+                    shareContainer.style.display = 'block';
+                    this.showStatus('Recording complete! Use the tabs below to share or download.', 'success');
+                } else {
+                    audioElement.style.display = 'none';
+                    shareContainer.classList.remove('show');
+                    shareContainer.style.display = 'none';
+                    this.showStatus('No sound was captured. Press Record and play pads.', 'error');
+                    URL.revokeObjectURL(url);
+                    return;
+                }
 
                 this.recordingTime = 0;
                 this.updateTimer();
-                this.showStatus('Recording complete! Use the tabs below to share or download.', 'success');
+                // message already shown when applicable
             }
 
             updateTimer() {
@@ -2049,9 +2082,20 @@
             const colors = [PRIMARY, SECONDARY, '#FF2E63', '#00E5FF', '#FFFFFF'];
             const SHAPES = ['triangle', 'arrow'];
 
+            // Offscreen canvases for pixelized fullscreen bursts
+            const burstCanvas = document.createElement('canvas');
+            const burstCtx = burstCanvas.getContext('2d');
+            const pxCanvas = document.createElement('canvas');
+            const pxCtx = pxCanvas.getContext('2d');
+            let pxScale = 0.12, pxW = 0, pxH = 0;
+
             function resize() {
                 W = canvas.width = Math.floor(window.innerWidth);
                 H = canvas.height = Math.floor(window.innerHeight);
+                burstCanvas.width = W; burstCanvas.height = H;
+                pxW = Math.max(1, Math.floor(W * pxScale));
+                pxH = Math.max(1, Math.floor(H * pxScale));
+                pxCanvas.width = pxW; pxCanvas.height = pxH;
             }
             resize();
             window.addEventListener('resize', resize);
@@ -2302,6 +2346,14 @@
             }
             // expose to app
             window.__addRepulse = __addRepulse;
+
+            // Fullscreen burst effects
+            const bursts = [];
+            function __addFullscreenBurst(x, y, duration = 0.8) {
+                const maxR = Math.hypot(W, H) * 1.1;
+                bursts.push({ x, y, t: 0, dur: duration, r0: 20, r1: maxR });
+            }
+            window.__addFullscreenBurst = __addFullscreenBurst;
             function frame(nowMs) {
                 const now = nowMs / 1000;
                 const dt = Math.min(0.05, (nowMs - last) / 1000);
@@ -2327,6 +2379,38 @@
                     p.t += dt;
                     if (p.t >= p.dur) pulses.splice(i, 1);
                 }
+
+                // draw fullscreen bursts under shapes with subtle pixelation
+                burstCtx.clearRect(0, 0, W, H);
+                for (let i = bursts.length - 1; i >= 0; i--) {
+                    const b = bursts[i];
+                    b.t += dt;
+                    const k = b.t / b.dur;
+                    if (k >= 1) { bursts.splice(i,1); continue; }
+                    const r = b.r0 + (b.r1 - b.r0) * k;
+                    const alpha = 0.25 * (1 - k); // less noticeable
+                    burstCtx.save();
+                    const grad = burstCtx.createRadialGradient(b.x, b.y, Math.max(1, r*0.3), b.x, b.y, r);
+                    const prgb = (getComputedStyle(document.documentElement).getPropertyValue('--primary-rgb') || '57,255,20');
+                    const srgb = (getComputedStyle(document.documentElement).getPropertyValue('--secondary-rgb') || '180,0,255');
+                    grad.addColorStop(0, `rgba(${prgb}, ${alpha})`);
+                    grad.addColorStop(0.6, `rgba(${srgb}, ${alpha*0.45})`);
+                    grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    burstCtx.globalCompositeOperation = 'lighter';
+                    burstCtx.fillStyle = grad;
+                    burstCtx.fillRect(0, 0, W, H);
+                    burstCtx.restore();
+                }
+                // pixelate: scale bursts down, then back up with nearest-neighbor, low alpha
+                pxCtx.clearRect(0, 0, pxW, pxH);
+                pxCtx.imageSmoothingEnabled = false;
+                pxCtx.drawImage(burstCanvas, 0, 0, W, H, 0, 0, pxW, pxH);
+                ctx.save();
+                ctx.imageSmoothingEnabled = false;
+                ctx.globalAlpha = 0.18; // subtle overlay
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.drawImage(pxCanvas, 0, 0, pxW, pxH, 0, 0, W, H);
+                ctx.restore();
 
                 // update/draw shapes
                 for (let i = shapes.length - 1; i >= 0; i--) {

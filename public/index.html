@@ -771,9 +771,9 @@
                 </div>
 
                 <div class="tab-pane" id="telegram-tab">
-                    <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;">Enter Telegram username or chat ID:</p>
-                    <input type="text" id="telegramInput" placeholder="@username or chat ID">
-                    <button class="share-btn" id="sendTelegramButton">Send to Telegram</button>
+                    <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;">Optional message to include with the voice note:</p>
+                    <input type="text" id="telegramMessageInput" placeholder="Add a message (optional)">
+                    <button class="share-btn" id="sendTelegramButton">Send to Telegram (Voice)</button>
                 </div>
 
                 <div class="tab-pane" id="download-tab">
@@ -808,6 +808,7 @@
                 this.delayAmount = 0.0;
                 this.volumeLevel = 0.7;
                 this.isRecording = false;
+                this.recordingHadAudio = false;
                 this.recordingTime = 0;
                 this.mediaRecorder = null;
                 this.recordedChunks = [];
@@ -966,6 +967,7 @@
                 source.playbackRate.value = this.pitchValues[index];
 
                 source.connect(this.masterGain);
+                if (this.isRecording) this.recordingHadAudio = true;
                 source.start(0);
 
                 this.activeSources.push(source);
@@ -1012,6 +1014,7 @@
 
                 oscillator.connect(gainNode);
                 gainNode.connect(this.masterGain);
+                if (this.isRecording) this.recordingHadAudio = true;
 
                 oscillator.start(now);
                 oscillator.stop(now + duration);
@@ -1047,6 +1050,20 @@
                 document.querySelectorAll('.sample-pad').forEach(pad => {
                     pad.classList.remove('playing');
                 });
+
+                // Immediately kill delay/reverb tails
+                try {
+                    if (this.delayFeedback) this.delayFeedback.gain.value = 0;
+                    if (this.delayWet) this.delayWet.gain.value = 0;
+                    if (this.delayNode) this.delayNode.delayTime.value = 0;
+                    if (this.reverbDry) this.reverbDry.gain.value = 0;
+                    if (this.reverbWet) this.reverbWet.gain.value = 0;
+                } catch (e) {}
+
+                // Restore effect mixes after a short moment based on sliders
+                setTimeout(() => {
+                    try { this.updateEffectsMix(); } catch (e) {}
+                }, 120);
 
                 this.showStatus('All sounds stopped', 'success');
             }
@@ -1187,7 +1204,7 @@
                 });
 
                 document.getElementById('sendTelegramButton').addEventListener('click', () => {
-                    this.sendRecording('telegram');
+                    this.sendRecording('telegram_voice');
                 });
 
                 document.getElementById('downloadButton').addEventListener('click', () => {
@@ -1201,23 +1218,18 @@
                     return;
                 }
 
-                let destination = '';
                 let buttonElement = null;
 
                 if (method === 'email') {
-                    destination = document.getElementById('emailInput').value;
+                    const destination = document.getElementById('emailInput').value;
                     buttonElement = document.getElementById('sendEmailButton');
                     if (!destination) {
                         this.showStatus('Please enter an email address', 'error');
                         return;
                     }
-                } else if (method === 'telegram') {
-                    destination = document.getElementById('telegramInput').value;
+                    this._pendingEmail = destination;
+                } else if (method === 'telegram_voice' || method === 'telegram') {
                     buttonElement = document.getElementById('sendTelegramButton');
-                    if (!destination) {
-                        this.showStatus('Please enter a Telegram username or chat ID', 'error');
-                        return;
-                    }
                 }
 
                 const formData = new FormData();
@@ -1234,19 +1246,24 @@
                         console.error('MP3 conversion failed, sending original:', err);
                         this.showStatus('MP3 conversion failed, sending original format', 'error');
                     }
+                } else if (method === 'telegram_voice') {
+                    // Prefer OGG/Opus for voice messages
+                    const recType = this.recordingBlob.type || '';
+                    if (recType.includes('audio/ogg')) {
+                        filename = 'voice.ogg';
+                    } else {
+                        this.showStatus('Voice requires OGG/Opus. Your browser may not support it. Try Firefox.', 'error');
+                    }
                 }
 
                 formData.append('audio', fileToSend, filename);
                 formData.append('method', method);
 
                 if (method === 'email') {
-                    formData.append('email', destination);
-                } else if (method === 'telegram') {
-                    if (destination.startsWith('@')) {
-                        formData.append('username', destination.substring(1));
-                    } else {
-                        formData.append('chatId', destination);
-                    }
+                    formData.append('email', this._pendingEmail);
+                } else if (method === 'telegram_voice' || method === 'telegram') {
+                    const message = document.getElementById('telegramMessageInput').value || '';
+                    if (message) formData.append('message', message);
                 }
 
                 const originalText = buttonElement.textContent;
@@ -1395,7 +1412,10 @@
                     this.reverbDry.connect(stream);
                     this.reverbWet.connect(stream);
 
-                    this.mediaRecorder = new MediaRecorder(stream.stream);
+                    const options = (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/ogg; codecs=opus'))
+                        ? { mimeType: 'audio/ogg; codecs=opus' }
+                        : {};
+                    this.mediaRecorder = new MediaRecorder(stream.stream, options);
                     this.recordedChunks = [];
                     this.recordingTime = 0;
 
@@ -1411,6 +1431,7 @@
 
                     this.mediaRecorder.start(100);
                     this.isRecording = true;
+                    this.recordingHadAudio = false;
 
                     const recordStopBtn = document.getElementById('recordStopBtn');
                     const timer = document.getElementById('timer');
@@ -1464,12 +1485,25 @@
                 audioElement.style.display = 'block';
 
                 const shareContainer = document.getElementById('shareContainer');
-                shareContainer.classList.add('show');
-                shareContainer.style.display = 'block';
+                const minimalBytes = 1500;
+                const hadAudio = this.recordingHadAudio || (this.recordingBlob && this.recordingBlob.size > minimalBytes);
+                if (hadAudio) {
+                    shareContainer.classList.add('show');
+                    shareContainer.style.display = 'block';
+                    this.showStatus('Recording complete! Use the tabs below to share or download.', 'success');
+                } else {
+                    // Hide audio and share UI if nothing meaningful was captured
+                    audioElement.style.display = 'none';
+                    shareContainer.classList.remove('show');
+                    shareContainer.style.display = 'none';
+                    this.showStatus('No sound was captured. Press Record and play pads.', 'error');
+                    URL.revokeObjectURL(url);
+                    return;
+                }
 
                 this.recordingTime = 0;
                 this.updateTimer();
-                this.showStatus('Recording complete! Use the tabs below to share or download.', 'success');
+                // message already shown above when applicable
             }
 
             updateTimer() {
