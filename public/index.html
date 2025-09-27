@@ -732,12 +732,12 @@
             <div class="effects-grid">
                 <div class="effect-control">
                     <label class="effect-label">DELAY</label>
-                    <input type="range" class="effect-slider" id="delaySlider" min="0" max="0.8" step="0.05" value="0.0">
+                    <input type="range" class="effect-slider" id="delaySlider" min="0" max="8" step="0.05" value="0.0">
                     <span class="effect-value" id="delayValue">0.0s</span>
                 </div>
                 <div class="effect-control">
                     <label class="effect-label">REVERB</label>
-                    <input type="range" class="effect-slider" id="reverbSlider" min="0" max="1" step="0.1" value="0.3">
+                    <input type="range" class="effect-slider" id="reverbSlider" min="0" max="10" step="0.1" value="0.3">
                     <span class="effect-value" id="reverbValue">0.3</span>
                 </div>
             </div>
@@ -835,7 +835,7 @@
 
 
                 // Delay effect setup
-                this.delayNode = this.audioContext.createDelay(1.0); // Max 1 second delay
+                this.delayNode = this.audioContext.createDelay(8.0); // Max 8 seconds delay
                 this.delayNode.delayTime.value = 0.0; // Start with no delay
                 this.delayFeedback = this.audioContext.createGain();
                 this.delayFeedback.gain.value = 0.3; // Feedback amount
@@ -897,9 +897,10 @@
                 this.delayDry.gain.value = 1.0;
                 this.delayWet.gain.value = this.delayAmount > 0 ? 0.4 : 0.0;
 
-                // Reverb mix (applied after delay)
-                this.reverbDry.gain.value = 1 - this.reverbAmount * 0.5;
-                this.reverbWet.gain.value = this.reverbAmount;
+                // Reverb mix (applied after delay); slider now 0..10, normalize to 0..1
+                const reverbMix = Math.min(1, this.reverbAmount / 10);
+                this.reverbDry.gain.value = 1 - reverbMix * 0.5;
+                this.reverbWet.gain.value = reverbMix;
             }
 
             async loadSamples() {
