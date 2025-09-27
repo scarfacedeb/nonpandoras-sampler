@@ -921,7 +921,11 @@
         }
         .record-stop-btn:hover:not(:disabled) {
             transform: translateY(-1px) scale(1.03);
-            box-shadow: 0 0 26px rgba(255,46,99,0.6), 0 0 32px rgba(var(--secondary-rgb), 0.35);
+            /* brighter, warmer hover for clarity */
+            background: linear-gradient(135deg, #FF6B8A, #FFB100);
+            border-color: #FF2E63;
+            box-shadow: 0 0 30px rgba(255,46,99,0.65), 0 0 38px rgba(255,177,0,0.45);
+            color: #0a0a0a; /* readable text */
         }
         .record-stop-btn:disabled {
             background: linear-gradient(135deg, #333, #222);
@@ -947,6 +951,7 @@
             transform: translateY(-1px) scale(1.04);
             box-shadow: 0 0 26px rgba(255,77,77,0.6);
             background: linear-gradient(135deg, #141414, #1f1f1f);
+            color: #ff4d4d; /* ensure high contrast on dark hover */
         }
         .panic-btn:active {
             transform: translateY(0) scale(0.97);
@@ -957,7 +962,7 @@
         .tabs {
             gap: 8px;
         }
-        .tab {
+        .tab { 
             padding: 12px 20px;
             background: rgba(10,10,10,0.55);
             border: 2px solid var(--primary);
@@ -965,7 +970,12 @@
             border-radius: 10px 10px 0 0;
             box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.25) inset, 0 0 14px rgba(var(--primary-rgb), 0.15);
         }
-        .tab:hover { filter: brightness(1.15); }
+        .tab:hover {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #0a0a0a; /* dark text on bright gradient */
+            border-color: var(--primary);
+            filter: none;
+        }
         .tab.active {
             background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.2), rgba(var(--secondary-rgb), 0.2));
             color: var(--text-soft-2);
@@ -1003,6 +1013,7 @@
         .share-btn:hover {
             transform: translateY(-1px) scale(1.02);
             filter: saturate(1.1);
+            color: #0a0a0a; /* lock in readable dark text on bright button */
         }
         .share-btn:disabled {
             background: linear-gradient(135deg, #333, #222);
