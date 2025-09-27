@@ -179,7 +179,9 @@ async function sendTelegram(chatId, filePath, caption) {
       caption: caption || 'Ваша запись из онлайн-сэмплера'
     });
     console.log('Отправлено в Telegram, message_id:', response.message_id);
-    return { success: true, messageId: response.message_id };
+    // Build a message link for the UI when possible
+    const messageLink = buildTelegramMessageLink(chatId, response.message_id);
+    return { success: true, messageId: response.message_id, messageLink };
   } catch (error) {
     console.error('Ошибка при отправке в Telegram:', error);
     return { success: false, error: error.message };
@@ -197,11 +199,28 @@ async function sendTelegramVoice(chatId, filePath, caption) {
       caption: caption || 'Голосовое сообщение из онлайн-сэмплера'
     });
     console.log('Voice отправлено в Telegram, message_id:', response.message_id);
-    return { success: true, messageId: response.message_id };
+    const messageLink = buildTelegramMessageLink(chatId, response.message_id);
+    return { success: true, messageId: response.message_id, messageLink };
   } catch (error) {
     console.error('Ошибка при отправке voice в Telegram:', error);
     return { success: false, error: error.message };
   }
+}
+
+// Helper: build a Telegram message link for UI
+function buildTelegramMessageLink(chatId, messageId) {
+  try {
+    const username = process.env.TELEGRAM_PUBLIC_USERNAME && String(process.env.TELEGRAM_PUBLIC_USERNAME).replace(/^@/, '');
+    if (username) {
+      return `https://t.me/${username}/${messageId}`;
+    }
+    const id = String(chatId || '');
+    if (id.startsWith('-100')) {
+      // Supergroup/channel style link; works for members of the group
+      return `https://t.me/c/${id.slice(4)}/${messageId}`;
+    }
+  } catch (_) {}
+  return undefined;
 }
 
 // Маршрут для проверки Telegram username

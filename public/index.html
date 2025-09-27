@@ -774,6 +774,9 @@
                     <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;">Optional message to include with the voice note:</p>
                     <input type="text" id="telegramMessageInput" placeholder="Add a message (optional)">
                     <button class="share-btn" id="sendTelegramButton">Send to Telegram (Voice)</button>
+                    <div id="telegramLinkRow" style="display:none; margin-top:10px; text-align:center;">
+                        <img id="telegramLinkQr" alt="Scan to open Telegram message" style="display:none; margin: 8px auto; width: 180px; height: 180px; border: 1px solid #000; background:#fff;" />
+                    </div>
                 </div>
 
                 <div class="tab-pane" id="download-tab">
@@ -1281,6 +1284,19 @@
 
                     if (data.success) {
                         this.showStatus(`Recording sent successfully via ${method}!`, 'success');
+                        // If telegram, show link row when provided
+                        if (method === 'telegram_voice' || method === 'telegram') {
+                            const linkRow = document.getElementById('telegramLinkRow');
+                            const linkQr = document.getElementById('telegramLinkQr');
+                            if (data.messageLink && linkRow && linkQr) {
+                                // Use black foreground on white background to match index styles
+                                const fg = '000000';
+                                const bg = 'FFFFFF';
+                                linkQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&color=${fg}&bgcolor=${bg}&data=${encodeURIComponent(data.messageLink)}`;
+                                linkQr.style.display = 'block';
+                                linkRow.style.display = 'block';
+                            }
+                        }
                         buttonElement.textContent = 'Sent';
                         buttonElement.disabled = true;
                     } else {
@@ -1458,6 +1474,12 @@
                     // Reset share buttons to default and enable
                     const emailBtn = document.getElementById('sendEmailButton');
                     const tgBtn = document.getElementById('sendTelegramButton');
+                    const linkRow = document.getElementById('telegramLinkRow');
+                    if (linkRow) {
+                        linkRow.style.display = 'none';
+                        const linkQr = document.getElementById('telegramLinkQr');
+                        if (linkQr) { linkQr.style.display = 'none'; linkQr.removeAttribute('src'); }
+                    }
                     if (emailBtn) {
                         emailBtn.disabled = false;
                         emailBtn.classList.remove('button-loading');
