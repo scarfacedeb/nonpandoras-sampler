@@ -1131,6 +1131,16 @@
                     <input type="range" class="effect-slider" id="reverbSlider" min="0" max="10" step="0.1" value="0.3">
                     <span class="effect-value" id="reverbValue">0.3</span>
                 </div>
+                <div class="effect-control">
+                    <label class="effect-label">DISTORTION</label>
+                    <input type="range" class="effect-slider" id="distortionSlider" min="0" max="1" step="0.01" value="0">
+                    <span class="effect-value" id="distortionValue">0.00</span>
+                </div>
+                <div class="effect-control">
+                    <label class="effect-label">PHASER</label>
+                    <input type="range" class="effect-slider" id="phaserSlider" min="0" max="1" step="0.01" value="0">
+                    <span class="effect-value" id="phaserValue">0.00</span>
+                </div>
             </div>
         </div>
 
@@ -1224,6 +1234,65 @@
                 this.masterGain = this.audioContext.createGain();
                 this.masterGain.gain.value = this.volumeLevel;
 
+                // Additional FX amounts (egg version only)
+                this.distortionAmount = 0.0; // 0..1
+                this.phaserAmount = 0.0;     // 0..1
+
+                // FX routing graph (Distortion -> Phaser -> Delay/Reverb)
+                this.fxInput = this.audioContext.createGain();
+                this.fxOutput = this.audioContext.createGain();
+                this.masterGain.connect(this.fxInput);
+
+                // Distortion nodes
+                this.waveShaper = this.audioContext.createWaveShaper();
+                this.waveShaper.oversample = '4x';
+                this.distDry = this.audioContext.createGain();
+                this.distWet = this.audioContext.createGain();
+                const postDist = this.audioContext.createGain();
+                // Split & sum
+                this.fxInput.connect(this.distDry);
+                this.fxInput.connect(this.waveShaper);
+                this.waveShaper.connect(this.distWet);
+                this.distDry.connect(postDist);
+                this.distWet.connect(postDist);
+
+                // Phaser nodes (allpass chain with LFO)
+                this.phaserDry = this.audioContext.createGain();
+                this.phaserWet = this.audioContext.createGain();
+                const stages = 4;
+                this.allpasses = [];
+                let prev = postDist;
+                for (let i = 0; i < stages; i++) {
+                    const ap = this.audioContext.createBiquadFilter();
+                    ap.type = 'allpass';
+                    ap.Q.value = 0.7;
+                    prev.connect(ap);
+                    prev = ap;
+                    this.allpasses.push(ap);
+                }
+                // Split to dry/wet
+                postDist.connect(this.phaserDry);
+                prev.connect(this.phaserWet);
+                // Sum to fxOutput
+                this.phaserDry.connect(this.fxOutput);
+                this.phaserWet.connect(this.fxOutput);
+
+                // LFO modulation for phaser
+                this.phaserLFO = this.audioContext.createOscillator();
+                this.phaserLFO.type = 'sine';
+                this.phaserLFO.frequency.value = 0.5; // Hz
+                this.phaserDepth = this.audioContext.createGain();
+                this.phaserDepth.gain.value = 300; // Hz sweep depth
+                this.phaserBias = this.audioContext.createConstantSource();
+                this.phaserBias.offset.value = 700; // base frequency
+                this.phaserLFO.connect(this.phaserDepth);
+                for (const ap of this.allpasses) {
+                    this.phaserDepth.connect(ap.frequency);
+                    this.phaserBias.connect(ap.frequency);
+                }
+                this.phaserLFO.start();
+                this.phaserBias.start();
+
 
                 // Delay effect setup
                 this.delayNode = this.audioContext.createDelay(8.0); // Max 8 seconds delay
@@ -1244,9 +1313,9 @@
                 this.convolver = this.audioContext.createConvolver();
                 this.createReverbImpulse();
 
-                // Audio routing: Master -> Delay -> Reverb -> Output
-                this.masterGain.connect(this.delayDry);
-                this.masterGain.connect(this.delayNode);
+                // Audio routing: FXOutput -> Delay -> Reverb -> Output
+                this.fxOutput.connect(this.delayDry);
+                this.fxOutput.connect(this.delayNode);
 
                 // Mix delay dry/wet
                 this.delayDry.connect(this.reverbDry);
@@ -1292,6 +1361,29 @@
                 const reverbMix = Math.min(1, this.reverbAmount / 10);
                 this.reverbDry.gain.value = 1 - reverbMix * 0.5;
                 this.reverbWet.gain.value = reverbMix;
+
+                // Distortion mix and curve (0..1)
+                const k = Math.max(0, Math.min(1, this.distortionAmount || 0));
+                this.waveShaper.curve = this.makeDistortionCurve(k);
+                this.distDry.gain.value = 1 - k;
+                this.distWet.gain.value = k;
+
+                // Phaser mix (0..1)
+                const p = Math.max(0, Math.min(1, this.phaserAmount || 0));
+                this.phaserDry.gain.value = 1 - p * 0.5;
+                this.phaserWet.gain.value = p;
+            }
+
+            makeDistortionCurve(amount) {
+                const n = 44100;
+                const curve = new Float32Array(n);
+                const k = amount * 400 + 1;
+                const deg = Math.PI / 180;
+                for (let i = 0; i < n; ++i) {
+                    const x = (i * 2) / n - 1;
+                    curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+                }
+                return curve;
             }
 
             async loadSamples() {
@@ -1504,6 +1596,10 @@
                 const delayValue = document.getElementById('delayValue');
                 const reverbSlider = document.getElementById('reverbSlider');
                 const reverbValue = document.getElementById('reverbValue');
+                const distortionSlider = document.getElementById('distortionSlider');
+                const distortionValue = document.getElementById('distortionValue');
+                const phaserSlider = document.getElementById('phaserSlider');
+                const phaserValue = document.getElementById('phaserValue');
 
                 delaySlider.addEventListener('input', (e) => {
                     this.delayAmount = parseFloat(e.target.value);
@@ -1514,6 +1610,18 @@
                 reverbSlider.addEventListener('input', (e) => {
                     this.reverbAmount = parseFloat(e.target.value);
                     reverbValue.textContent = this.reverbAmount.toFixed(1);
+                    this.updateEffectsMix();
+                });
+
+                distortionSlider.addEventListener('input', (e) => {
+                    this.distortionAmount = parseFloat(e.target.value);
+                    distortionValue.textContent = this.distortionAmount.toFixed(2);
+                    this.updateEffectsMix();
+                });
+
+                phaserSlider.addEventListener('input', (e) => {
+                    this.phaserAmount = parseFloat(e.target.value);
+                    phaserValue.textContent = this.phaserAmount.toFixed(2);
                     this.updateEffectsMix();
                 });
 
