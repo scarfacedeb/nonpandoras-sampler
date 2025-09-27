@@ -1199,13 +1199,13 @@
                     });
                 });
 
-                document.getElementById('sendEmailButton').addEventListener('click', () => {
-                    this.sendRecording('email');
-                });
+                const emailBtn = document.getElementById('sendEmailButton');
+                const tgBtn = document.getElementById('sendTelegramButton');
+                if (emailBtn) emailBtn.dataset.defaultText = emailBtn.textContent;
+                if (tgBtn) tgBtn.dataset.defaultText = tgBtn.textContent;
 
-                document.getElementById('sendTelegramButton').addEventListener('click', () => {
-                    this.sendRecording('telegram_voice');
-                });
+                emailBtn.addEventListener('click', () => { this.sendRecording('email'); });
+                tgBtn.addEventListener('click', () => { this.sendRecording('telegram_voice'); });
 
                 document.getElementById('downloadButton').addEventListener('click', () => {
                     this.downloadRecording();
@@ -1281,14 +1281,18 @@
 
                     if (data.success) {
                         this.showStatus(`Recording sent successfully via ${method}!`, 'success');
+                        buttonElement.textContent = 'Sent';
+                        buttonElement.disabled = true;
                     } else {
                         this.showStatus(`Error sending recording: ${data.error || 'Unknown error'}`, 'error');
+                        buttonElement.textContent = buttonElement.dataset.defaultText || originalText;
+                        buttonElement.disabled = false;
                     }
                 } catch (error) {
                     this.showStatus(`Error sending recording: ${error.message}`, 'error');
-                } finally {
-                    buttonElement.textContent = originalText;
+                    buttonElement.textContent = buttonElement.dataset.defaultText || originalText;
                     buttonElement.disabled = false;
+                } finally {
                     buttonElement.classList.remove('button-loading');
                 }
             }
@@ -1450,6 +1454,20 @@
                     }, 1000);
 
                     this.showStatus('Recording started...', 'success');
+
+                    // Reset share buttons to default and enable
+                    const emailBtn = document.getElementById('sendEmailButton');
+                    const tgBtn = document.getElementById('sendTelegramButton');
+                    if (emailBtn) {
+                        emailBtn.disabled = false;
+                        emailBtn.classList.remove('button-loading');
+                        emailBtn.textContent = emailBtn.dataset.defaultText || 'Send to Email';
+                    }
+                    if (tgBtn) {
+                        tgBtn.disabled = false;
+                        tgBtn.classList.remove('button-loading');
+                        tgBtn.textContent = tgBtn.dataset.defaultText || 'Send to Telegram';
+                    }
                 } catch (error) {
                     this.showStatus('Error starting recording: ' + error.message, 'error');
                 }
