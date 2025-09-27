@@ -536,6 +536,48 @@
             100% { text-shadow: none; }
         }
 
+        @keyframes bassThump {
+            0% { transform: scale(1); border-width: 3px; }
+            20% { transform: scale(1.2); border-width: 8px; }
+            40% { transform: scale(1.1); border-width: 6px; }
+            60% { transform: scale(1.05); border-width: 5px; }
+            80% { transform: scale(1.02); border-width: 4px; }
+            100% { transform: scale(1); border-width: 3px; }
+        }
+
+        @keyframes kickPulse {
+            0% { transform: scale(1); box-shadow: none; }
+            10% { transform: scale(1.15); box-shadow: 0 0 0 5px rgba(0, 0, 0, 0.3); }
+            25% { transform: scale(1.08); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2); }
+            50% { transform: scale(1.03); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1); }
+            100% { transform: scale(1); box-shadow: none; }
+        }
+
+        @keyframes hihatFlicker {
+            0%, 100% { opacity: 1; border-color: #000000; }
+            10% { opacity: 0.7; border-color: #333333; }
+            20% { opacity: 1; border-color: #000000; }
+            30% { opacity: 0.8; border-color: #222222; }
+            40% { opacity: 1; border-color: #000000; }
+        }
+
+        @keyframes synthWave {
+            0% { transform: scale(1) rotate(0deg); border-width: 3px; }
+            25% { transform: scale(1.1) rotate(1deg); border-width: 4px; }
+            50% { transform: scale(1.15) rotate(0deg); border-width: 5px; }
+            75% { transform: scale(1.1) rotate(-1deg); border-width: 4px; }
+            100% { transform: scale(1) rotate(0deg); border-width: 3px; }
+        }
+
+        @keyframes melodyFlow {
+            0% { transform: scale(1); border-color: #000000; }
+            20% { transform: scale(1.08); border-color: #333333; }
+            40% { transform: scale(1.12); border-color: #000000; }
+            60% { transform: scale(1.06); border-color: #222222; }
+            80% { transform: scale(1.03); border-color: #000000; }
+            100% { transform: scale(1); border-color: #000000; }
+        }
+
         @keyframes loading {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -869,8 +911,20 @@
                 const now = this.audioContext.currentTime;
                 const duration = durations[index] || 0.3;
 
+                // Different ADSR envelopes for different sound types
+                const envelopes = [
+                    { attack: 0.01, sustain: 0.3, release: 0.4 },  // Bass - slow attack, long sustain
+                    { attack: 0.001, sustain: 0.1, release: 0.2 }, // Kick - quick attack, short decay
+                    { attack: 0.001, sustain: 0.05, release: 0.15 }, // Hi-hat - very quick
+                    { attack: 0.05, sustain: 0.4, release: 0.3 },   // Synth - smooth attack
+                    { attack: 0.02, sustain: 0.5, release: 0.4 }    // Melody - gentle attack
+                ];
+
+                const envelope = envelopes[index];
+
                 gainNode.gain.setValueAtTime(0, now);
-                gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
+                gainNode.gain.linearRampToValueAtTime(0.3, now + envelope.attack);
+                gainNode.gain.linearRampToValueAtTime(envelope.sustain, now + envelope.attack + 0.1);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
                 oscillator.connect(gainNode);
@@ -918,13 +972,55 @@
                 const pad = document.querySelector(`[data-index="${index}"]`);
                 pad.classList.add('playing');
 
-                // Add extra visual feedback
-                pad.style.animation = 'buttonPress 0.1s ease-out, borderExpand 0.3s ease-out';
+                // Different animations based on pad index and sound characteristics
+                const animationPattern = this.getAnimationForPad(index, duration);
+                pad.style.animation = animationPattern;
 
                 setTimeout(() => {
                     pad.classList.remove('playing');
                     pad.style.animation = '';
                 }, Math.min(duration * 1000, 800));
+            }
+
+            getAnimationForPad(index, duration) {
+                // Map different pads to different sound types with appropriate animations
+                const soundTypes = [
+                    'bass',      // Pad 1 - Low frequency, heavy thump
+                    'kick',      // Pad 2 - Percussive, sharp attack
+                    'hihat',     // Pad 3 - High frequency, quick flicker
+                    'synth',     // Pad 4 - Melodic, wave-like
+                    'melody'     // Pad 5 - Harmonic, flowing
+                ];
+
+                const soundType = soundTypes[index] || 'default';
+                const pitchRate = this.pitchValues[index];
+
+                // Adjust animation speed based on pitch - higher pitch = faster animation
+                const pitchAdjustedDuration = Math.min(duration / pitchRate, 0.8);
+
+                // Intensity modifier based on pitch
+                const intensityClass = pitchRate > 1.5 ? 'high-intensity' :
+                                     pitchRate < 0.7 ? 'low-intensity' : 'normal-intensity';
+
+                switch (soundType) {
+                    case 'bass':
+                        return `bassThump ${pitchAdjustedDuration}s ease-out`;
+
+                    case 'kick':
+                        return `kickPulse ${Math.min(pitchAdjustedDuration, 0.3)}s ease-out`;
+
+                    case 'hihat':
+                        return `hihatFlicker ${Math.min(pitchAdjustedDuration, 0.2)}s ease-out`;
+
+                    case 'synth':
+                        return `synthWave ${pitchAdjustedDuration}s ease-in-out`;
+
+                    case 'melody':
+                        return `melodyFlow ${pitchAdjustedDuration}s ease-in-out`;
+
+                    default:
+                        return `buttonPress 0.1s ease-out, borderExpand 0.3s ease-out`;
+                }
             }
 
             setupEventListeners() {
