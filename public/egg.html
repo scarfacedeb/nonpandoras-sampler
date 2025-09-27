@@ -1183,9 +1183,9 @@
                 </div>
 
                 <div class="tab-pane" id="telegram-tab">
-                    <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;">Enter Telegram username or chat ID:</p>
-                    <input type="text" id="telegramInput" placeholder="@username or chat ID">
-                    <button class="share-btn" id="sendTelegramButton">Send to Telegram</button>
+                    <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;">Optional message to include with the voice note:</p>
+                    <input type="text" id="telegramMessageInput" placeholder="Add a message (optional)">
+                    <button class="share-btn" id="sendTelegramButton">Send to Telegram (Voice)</button>
                 </div>
 
                 <div class="tab-pane" id="download-tab">
@@ -1747,7 +1747,7 @@
                 if (tgBtn) tgBtn.dataset.defaultText = tgBtn.textContent;
 
                 emailBtn.addEventListener('click', () => { this.sendRecording('email'); });
-                tgBtn.addEventListener('click', () => { this.sendRecording('telegram'); });
+                tgBtn.addEventListener('click', () => { this.sendRecording('telegram_voice'); });
 
                 document.getElementById('downloadButton').addEventListener('click', () => {
                     this.downloadRecording();
@@ -1760,23 +1760,18 @@
                     return;
                 }
 
-                let destination = '';
                 let buttonElement = null;
 
                 if (method === 'email') {
-                    destination = document.getElementById('emailInput').value;
+                    const destination = document.getElementById('emailInput').value;
                     buttonElement = document.getElementById('sendEmailButton');
                     if (!destination) {
                         this.showStatus('Please enter an email address', 'error');
                         return;
                     }
-                } else if (method === 'telegram') {
-                    destination = document.getElementById('telegramInput').value;
+                    this._pendingEmail = destination;
+                } else if (method === 'telegram_voice') {
                     buttonElement = document.getElementById('sendTelegramButton');
-                    if (!destination) {
-                        this.showStatus('Please enter a Telegram username or chat ID', 'error');
-                        return;
-                    }
                 }
 
                 const formData = new FormData();
@@ -1799,13 +1794,10 @@
                 formData.append('method', method);
 
                 if (method === 'email') {
-                    formData.append('email', destination);
-                } else if (method === 'telegram') {
-                    if (destination.startsWith('@')) {
-                        formData.append('username', destination.substring(1));
-                    } else {
-                        formData.append('chatId', destination);
-                    }
+                    formData.append('email', this._pendingEmail);
+                } else if (method === 'telegram_voice') {
+                    const message = document.getElementById('telegramMessageInput').value || '';
+                    if (message) formData.append('message', message);
                 }
 
                 const originalText = buttonElement.textContent;
@@ -2105,7 +2097,8 @@
             const burstCtx = burstCanvas.getContext('2d');
             const pxCanvas = document.createElement('canvas');
             const pxCtx = pxCanvas.getContext('2d');
-            let pxScale = 0.12, pxW = 0, pxH = 0;
+            // Extra-chunky pixels for a retro look
+            let pxScale = 0.03, pxW = 0, pxH = 0;
 
             function resize() {
                 W = canvas.width = Math.floor(window.innerWidth);
@@ -2173,6 +2166,10 @@
                 grad.addColorStop(0, s.color);
                 grad.addColorStop(1, 'rgba(255,255,255,0.85)');
                 ctx.save();
+                // Add a slight blur specifically for arrows to soften edges
+                if (s.kind === 'arrow') {
+                    ctx.filter = 'blur(2px)';
+                }
                 ctx.beginPath();
                 ctx.moveTo(pts[0][0], pts[0][1]);
                 for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
@@ -2367,7 +2364,7 @@
 
             // Fullscreen burst effects
             const bursts = [];
-            function __addFullscreenBurst(x, y, duration = 0.8) {
+            function __addFullscreenBurst(x, y, duration = 1.2) {
                 const maxR = Math.hypot(W, H) * 1.1;
                 bursts.push({ x, y, t: 0, dur: duration, r0: 20, r1: maxR });
             }
@@ -2406,9 +2403,9 @@
                     const k = b.t / b.dur;
                     if (k >= 1) { bursts.splice(i,1); continue; }
                     const r = b.r0 + (b.r1 - b.r0) * k;
-                    const alpha = 0.25 * (1 - k); // less noticeable
+                    const alpha = 0.45 * (1 - k); // stronger visibility
                     burstCtx.save();
-                    const grad = burstCtx.createRadialGradient(b.x, b.y, Math.max(1, r*0.3), b.x, b.y, r);
+                    const grad = burstCtx.createRadialGradient(b.x, b.y, Math.max(1, r*0.2), b.x, b.y, r);
                     const prgb = (getComputedStyle(document.documentElement).getPropertyValue('--primary-rgb') || '57,255,20');
                     const srgb = (getComputedStyle(document.documentElement).getPropertyValue('--secondary-rgb') || '180,0,255');
                     grad.addColorStop(0, `rgba(${prgb}, ${alpha})`);
@@ -2419,15 +2416,44 @@
                     burstCtx.fillRect(0, 0, W, H);
                     burstCtx.restore();
                 }
-                // pixelate: scale bursts down, then back up with nearest-neighbor, low alpha
+                // pixelate: scale bursts down, posterize, then back up with nearest-neighbor
                 pxCtx.clearRect(0, 0, pxW, pxH);
                 pxCtx.imageSmoothingEnabled = false;
                 pxCtx.drawImage(burstCanvas, 0, 0, W, H, 0, 0, pxW, pxH);
+                // Posterize to a few brightness levels for a stylized effect
+                try {
+                    const levels = 4; // 4 levels per channel
+                    const img = pxCtx.getImageData(0, 0, pxW, pxH);
+                    const d = img.data;
+                    const step = 256 / levels;
+                    const map = [];
+                    for (let v = 0; v < 256; v++) {
+                        const q = Math.floor(v / step);
+                        map[v] = Math.round(q * 255 / (levels - 1));
+                    }
+                    for (let i = 0; i < d.length; i += 4) {
+                        d[i]   = map[d[i]];     // R
+                        d[i+1] = map[d[i+1]];   // G
+                        d[i+2] = map[d[i+2]];   // B
+                        // preserve alpha
+                    }
+                    pxCtx.putImageData(img, 0, 0);
+                } catch (e) { /* ignore if security or other canvas errors */ }
                 ctx.save();
                 ctx.imageSmoothingEnabled = false;
-                ctx.globalAlpha = 0.18; // subtle overlay
+                ctx.globalAlpha = 0.6; // strong pixelation overlay
                 ctx.globalCompositeOperation = 'lighter';
                 ctx.drawImage(pxCanvas, 0, 0, pxW, pxH, 0, 0, W, H);
+                // Add subtle horizontal scanlines for retro vibe
+                try {
+                    ctx.globalAlpha = 0.12;
+                    ctx.globalCompositeOperation = 'multiply';
+                    ctx.fillStyle = '#000000';
+                    const spacing = 3; // pixels between lines
+                    for (let y = 0; y < H; y += spacing) {
+                        ctx.fillRect(0, y, W, 1);
+                    }
+                } catch (e) {}
                 ctx.restore();
 
                 // update/draw shapes
