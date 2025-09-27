@@ -511,13 +511,13 @@
         }
 
         .status-message.error {
-            background: #ffffff;
+            background: rgba(10,10,10,0.55);
             color: #ff0000;
             border-color: #ff0000;
         }
 
         .status-message.success {
-            background: #ffffff;
+            background: rgba(10,10,10,0.55);
             color: #000000;
             border-color: #000000;
         }
@@ -1054,11 +1054,13 @@
             box-shadow: 0 0 16px rgba(var(--primary-rgb), 0.25), inset 0 0 12px rgba(var(--secondary-rgb), 0.15);
         }
         .status-message.error {
+            background: rgba(10,10,10,0.55);
             border-color: #FF2E63;
             color: #ffd6e0;
             box-shadow: 0 0 18px rgba(255,46,99,0.45), inset 0 0 12px rgba(var(--secondary-rgb), 0.15);
         }
         .status-message.success {
+            background: rgba(10,10,10,0.55);
             border-color: var(--primary);
             color: var(--text-soft-2);
             box-shadow: 0 0 18px rgba(var(--primary-rgb), 0.45), inset 0 0 12px rgba(var(--secondary-rgb), 0.15);
@@ -1105,27 +1107,27 @@
         <div class="sampler-grid">
             <div class="pad-container">
                 <button class="sample-pad" data-index="0">1</button>
-                <input type="range" class="pitch-slider" data-index="0" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="0" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="1">2</button>
-                <input type="range" class="pitch-slider" data-index="1" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="1" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="2">3</button>
-                <input type="range" class="pitch-slider" data-index="2" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="2" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="3">4</button>
-                <input type="range" class="pitch-slider" data-index="3" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="3" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="4">5</button>
-                <input type="range" class="pitch-slider" data-index="4" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="4" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
         </div>
@@ -1139,7 +1141,7 @@
                 </div>
                 <div class="effect-control">
                     <label class="effect-label">REVERB</label>
-                    <input type="range" class="effect-slider" id="reverbSlider" min="0" max="10" step="0.1" value="0.3">
+                    <input type="range" class="effect-slider" id="reverbSlider" min="0" max="500" step="0.1" value="0.3">
                     <span class="effect-value" id="reverbValue">0.3</span>
                 </div>
                 <div class="effect-control">
@@ -1341,18 +1343,44 @@
                 this.reverbDry.connect(this.audioContext.destination);
                 this.reverbWet.connect(this.audioContext.destination);
 
+                // Output analyser for visuals (triangles react to sound)
+                this.levelAnalyser = this.audioContext.createAnalyser();
+                this.levelAnalyser.fftSize = 512;
+                this.reverbDry.connect(this.levelAnalyser);
+                this.reverbWet.connect(this.levelAnalyser);
+                const timeData = new Uint8Array(this.levelAnalyser.fftSize);
+                window.__getAudioLevel = () => {
+                    try {
+                        this.levelAnalyser.getByteTimeDomainData(timeData);
+                        let sum = 0;
+                        for (let i = 0; i < timeData.length; i++) {
+                            const v = timeData[i] - 128;
+                            sum += v * v;
+                        }
+                        const rms = Math.sqrt(sum / timeData.length) / 128;
+                        return Math.max(0, Math.min(1, rms * 2));
+                    } catch (_) {
+                        return 0;
+                    }
+                };
+
                 this.updateEffectsMix();
             }
 
             createReverbImpulse() {
-                const impulseLength = this.audioContext.sampleRate * 2;
-                const impulse = this.audioContext.createBuffer(2, impulseLength, this.audioContext.sampleRate);
+                // Larger room: longer impulse, slower decay, slight pre-delay
+                const sampleRate = this.audioContext.sampleRate;
+                const preDelay = Math.floor(0.03 * sampleRate); // 30ms pre-delay
+                const impulseLength = sampleRate * 6; // ~6 seconds
+                const impulse = this.audioContext.createBuffer(2, impulseLength, sampleRate);
 
                 for (let channel = 0; channel < 2; channel++) {
                     const impulseData = impulse.getChannelData(channel);
                     for (let i = 0; i < impulseLength; i++) {
-                        const decay = Math.pow(1 - i / impulseLength, 2);
-                        impulseData[i] = (Math.random() * 2 - 1) * decay;
+                        const t = Math.max(0, i - preDelay) / impulseLength;
+                        const decay = Math.pow(1 - t, 1.2); // slower tail
+                        const damp = 0.9 + 0.1 * Math.cos(i / impulseLength * Math.PI);
+                        impulseData[i] = (Math.random() * 2 - 1) * decay * damp;
                     }
                 }
 
@@ -1368,8 +1396,8 @@
                 this.delayDry.gain.value = 1.0;
                 this.delayWet.gain.value = this.delayAmount > 0 ? 0.4 : 0.0;
 
-                // Reverb mix (applied after delay); slider now 0..10, normalize to 0..1
-                const reverbMix = Math.min(1, this.reverbAmount / 10);
+                // Reverb mix (applied after delay); slider now 0..500, normalize to 0..1
+                const reverbMix = Math.min(1, this.reverbAmount / 500);
                 this.reverbDry.gain.value = 1 - reverbMix * 0.5;
                 this.reverbWet.gain.value = reverbMix;
 
@@ -1443,6 +1471,15 @@
                     this.playAudioBuffer(index);
                 } else {
                     this.playSynthSound(index);
+                }
+
+                // Visual reaction: repel shapes from the pressed pad's center
+                const pad = document.querySelector(`[data-index="${index}"]`);
+                if (pad && window.__addRepulse) {
+                    const r = pad.getBoundingClientRect();
+                    const cx = r.left + r.width/2;
+                    const cy = r.top + r.height/2;
+                    window.__addRepulse(cx, cy, 1200, 280, 0.6);
                 }
             }
 
@@ -2023,7 +2060,7 @@
                 const kind = SHAPES[Math.floor(Math.random() * SHAPES.length)];
                 const color = colors[Math.floor(Math.random() * colors.length)];
                 const size = 28 + Math.random() * 40; // 28-68px visual size
-                const speed = 10 + Math.random() * 24; // slower fall speed (px/sec)
+                const speed = 28 + Math.random() * 44; // faster fall speed (px/sec)
                 const wobbleAmp = 6 + Math.random() * 14; // side-to-side drift
                 const wobbleFreq = 0.3 + Math.random() * 0.9; // Hz
 
@@ -2032,7 +2069,7 @@
                 const y = -size - Math.random() * 120; // start above view (center y)
                 const t0 = performance.now() / 1000;
 
-                return { kind, color, size, x, y, speed, wobbleAmp, wobbleFreq, t0 };
+                return { kind, color, size, x, y, speed, wobbleAmp, wobbleFreq, t0, vx: 0, vy: 0 };
             }
 
             const shapes = [];
@@ -2067,7 +2104,7 @@
                 ];
             }
 
-            function drawSmoothShape(s, cx, cy) {
+            function drawSmoothShape(s, cx, cy, audio) {
                 const pts = s.kind === 'triangle' ? trianglePoints(cx, cy, s.size) : arrowPoints(cx, cy, s.size);
                 // gradient + glow similar to bubbles
                 const grad = ctx.createLinearGradient(cx, cy - s.size, cx, cy + s.size);
@@ -2078,10 +2115,11 @@
                 ctx.moveTo(pts[0][0], pts[0][1]);
                 for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
                 ctx.closePath();
+                const boost = Math.min(1, (audio || 0) * 1.2);
                 ctx.shadowColor = s.color;
-                ctx.shadowBlur = s.hover ? 28 : 18;
+                ctx.shadowBlur = (s.hover ? 28 : 18) + boost * 22;
                 ctx.fillStyle = grad;
-                ctx.globalAlpha = s.hover ? 1.0 : 0.92;
+                ctx.globalAlpha = (s.hover ? 1.0 : 0.92) * (0.9 + 0.1 * boost);
                 ctx.fill();
                 if (s.hover) {
                     ctx.lineWidth = 2;
@@ -2256,6 +2294,14 @@
             window.addEventListener('mousemove', (e)=>{ updateHover(e.clientX, e.clientY); }, {passive:true, capture:true});
 
             let last = performance.now();
+            let audioLevel = 0;
+            // Repulsion pulses (from pressed pads)
+            const pulses = [];
+            function __addRepulse(x, y, strength = 1200, radius = 280, duration = 0.6) {
+                pulses.push({ x, y, strength, radius, t: 0, dur: duration });
+            }
+            // expose to app
+            window.__addRepulse = __addRepulse;
             function frame(nowMs) {
                 const now = nowMs / 1000;
                 const dt = Math.min(0.05, (nowMs - last) / 1000);
@@ -2263,20 +2309,56 @@
 
                 ctx.clearRect(0, 0, W, H);
 
-                // spawn
+                // audio level smoothing
+                const lvl = (window.__getAudioLevel && window.__getAudioLevel()) || 0;
+                audioLevel = audioLevel * 0.82 + lvl * 0.18;
+
+                // spawn (slightly faster on higher audio)
                 spawnTimer -= dt;
                 if (spawnTimer <= 0 && shapes.length < maxShapes) {
                     shapes.push(createShape());
-                    spawnTimer = 0.15 + Math.random() * 0.25;
+                    const base = 0.25 + Math.random() * 0.25;
+                    spawnTimer = Math.max(0.12, base * (1.0 - 0.35 * audioLevel));
+                }
+
+                // update pulses
+                for (let i = pulses.length - 1; i >= 0; i--) {
+                    const p = pulses[i];
+                    p.t += dt;
+                    if (p.t >= p.dur) pulses.splice(i, 1);
                 }
 
                 // update/draw shapes
                 for (let i = shapes.length - 1; i >= 0; i--) {
                     const s = shapes[i];
-                    s.y += s.speed * dt;
+                    const speedBoost = 1.15 + audioLevel * 1.0; // higher baseline and audio influence
+                    s.y += s.speed * speedBoost * dt;
                     const t = now - s.t0;
-                    const wobble = Math.sin(t * Math.PI * 2 * s.wobbleFreq) * s.wobbleAmp;
-                    drawSmoothShape(s, s.x + wobble, s.y);
+                    const wobble = Math.sin(t * Math.PI * 2 * s.wobbleFreq) * (s.wobbleAmp * (1 + audioLevel * 0.6));
+
+                    // apply repulsion from active pulses
+                    for (let j = 0; j < pulses.length; j++) {
+                        const p = pulses[j];
+                        const px = p.x; const py = p.y;
+                        const dx = (s.x + wobble) - px;
+                        const dy = s.y - py;
+                        const dist = Math.hypot(dx, dy) || 0.0001;
+                        if (dist < p.radius) {
+                            const k = 1 - dist / p.radius;
+                            const force = p.strength * k * (1 - p.t / p.dur);
+                            const nx = dx / dist, ny = dy / dist;
+                            s.vx += nx * force * dt;
+                            s.vy += ny * force * dt;
+                        }
+                    }
+
+                    // integrate velocities with damping (no edge bounces)
+                    s.x += s.vx * dt;
+                    s.y += s.vy * dt;
+                    s.vx *= 0.985;
+                    s.vy *= 0.985;
+
+                    drawSmoothShape(s, s.x + wobble, s.y, audioLevel);
 
                     if (s.y > H + 60) {
                         shapes.splice(i, 1);

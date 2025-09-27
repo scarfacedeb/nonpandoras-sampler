@@ -498,18 +498,20 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             animation: slideIn 0.3s ease-out;
+            background: rgba(0, 0, 0, 0.75);
+            color: #ffffff;
         }
 
         .status-message.error {
-            background: #ffffff;
-            color: #ff0000;
-            border-color: #ff0000;
+            background: rgba(51, 0, 0, 0.6);
+            color: #ffb3b3;
+            border-color: #ff3333;
         }
 
         .status-message.success {
-            background: #ffffff;
-            color: #000000;
-            border-color: #000000;
+            background: rgba(0, 51, 0, 0.6);
+            color: #c8ffc8;
+            border-color: #00aa00;
         }
 
         @keyframes pulse {
@@ -703,27 +705,27 @@
         <div class="sampler-grid">
             <div class="pad-container">
                 <button class="sample-pad" data-index="0">1</button>
-                <input type="range" class="pitch-slider" data-index="0" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="0" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="1">2</button>
-                <input type="range" class="pitch-slider" data-index="1" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="1" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="2">3</button>
-                <input type="range" class="pitch-slider" data-index="2" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="2" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="3">4</button>
-                <input type="range" class="pitch-slider" data-index="3" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="3" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="4">5</button>
-                <input type="range" class="pitch-slider" data-index="4" min="0.5" max="2" step="0.1" value="1">
+                <input type="range" class="pitch-slider" data-index="4" min="0.1" max="4" step="0.1" value="1">
                 <div class="pitch-label">Pitch</div>
             </div>
         </div>
@@ -737,7 +739,7 @@
                 </div>
                 <div class="effect-control">
                     <label class="effect-label">REVERB</label>
-                    <input type="range" class="effect-slider" id="reverbSlider" min="0" max="10" step="0.1" value="0.3">
+                    <input type="range" class="effect-slider" id="reverbSlider" min="0" max="500" step="0.1" value="0.3">
                     <span class="effect-value" id="reverbValue">0.3</span>
                 </div>
             </div>
@@ -874,14 +876,20 @@
             }
 
             createReverbImpulse() {
-                const impulseLength = this.audioContext.sampleRate * 2;
-                const impulse = this.audioContext.createBuffer(2, impulseLength, this.audioContext.sampleRate);
+                // Larger room: longer impulse, slower decay, slight pre-delay
+                const sampleRate = this.audioContext.sampleRate;
+                const preDelay = Math.floor(0.03 * sampleRate); // 30ms pre-delay
+                const impulseLength = sampleRate * 6; // ~6 seconds
+                const impulse = this.audioContext.createBuffer(2, impulseLength, sampleRate);
 
                 for (let channel = 0; channel < 2; channel++) {
                     const impulseData = impulse.getChannelData(channel);
                     for (let i = 0; i < impulseLength; i++) {
-                        const decay = Math.pow(1 - i / impulseLength, 2);
-                        impulseData[i] = (Math.random() * 2 - 1) * decay;
+                        const t = Math.max(0, i - preDelay) / impulseLength;
+                        const decay = Math.pow(1 - t, 1.2); // slower tail
+                        // Add very slight lowpass-like damping by reducing very late reflections
+                        const damp = 0.9 + 0.1 * Math.cos(i / impulseLength * Math.PI);
+                        impulseData[i] = (Math.random() * 2 - 1) * decay * damp;
                     }
                 }
 
@@ -897,8 +905,8 @@
                 this.delayDry.gain.value = 1.0;
                 this.delayWet.gain.value = this.delayAmount > 0 ? 0.4 : 0.0;
 
-                // Reverb mix (applied after delay); slider now 0..10, normalize to 0..1
-                const reverbMix = Math.min(1, this.reverbAmount / 10);
+                // Reverb mix (applied after delay); slider now 0..500, normalize to 0..1
+                const reverbMix = Math.min(1, this.reverbAmount / 500);
                 this.reverbDry.gain.value = 1 - reverbMix * 0.5;
                 this.reverbWet.gain.value = reverbMix;
             }
