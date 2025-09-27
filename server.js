@@ -46,6 +46,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use('/samples', express.static('samples'));
 
+// Отдельный маршрут для страницы egg
+app.get('/egg', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'egg.html'));
+});
+
 // Настройка Telegram бота
 let telegramBot;
 if (process.env.TELEGRAM_BOT_TOKEN) {
@@ -200,4 +205,3 @@ app.listen(port, () => {
   console.log(`Сервер запущен на порту ${port}`);
   console.log(`Откройте http://localhost:${port} в браузере`);
 });
-
