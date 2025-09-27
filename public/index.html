@@ -29,6 +29,7 @@
             max-width: 700px;
             width: 100%;
             position: relative;
+            animation: slideIn 0.8s ease-out;
         }
 
         h1 {
@@ -82,6 +83,7 @@
             color: #ffffff;
             transform: scale(0.9);
             border-width: 5px;
+            animation: borderExpand 0.3s ease-out, textGlow 0.5s ease-out;
         }
 
         .sample-pad.loaded {
@@ -93,6 +95,14 @@
         .sample-pad.loaded:hover {
             background: #000000;
             color: #ffffff;
+        }
+
+        .sample-pad.keyboard-active {
+            background: #000000 !important;
+            color: #ffffff !important;
+            transform: scale(1.05) !important;
+            border-width: 5px !important;
+            animation: borderExpand 0.2s ease-out !important;
         }
 
         .pitch-slider {
@@ -241,7 +251,7 @@
         }
 
         .record-stop-btn.recording {
-            animation: pulse 1s ease-in-out infinite alternate;
+            animation: pulse 1s ease-in-out infinite alternate, glow 2s ease-in-out infinite;
             background: #ff0000;
         }
 
@@ -271,6 +281,7 @@
         .panic-btn:active {
             transform: scale(0.95);
             border-width: 5px;
+            animation: buttonPress 0.2s ease-out, shake 0.3s ease-out;
         }
 
         .tabs {
@@ -292,6 +303,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: all 0.15s ease;
+            color: #000000;
         }
 
         .tab:last-child {
@@ -324,11 +336,17 @@
 
         .tab-pane.active {
             display: block;
+            animation: slideIn 0.3s ease-out;
         }
 
         .share-container {
             margin-top: 20px;
             display: none;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        .share-container.show {
+            display: block;
         }
 
         .share-container h3 {
@@ -441,6 +459,7 @@
             border: 2px solid #000000;
             text-transform: uppercase;
             letter-spacing: 1px;
+            animation: slideIn 0.3s ease-out;
         }
 
         .status-message.error {
@@ -463,6 +482,93 @@
         @keyframes blink {
             from { opacity: 1; }
             to { opacity: 0.5; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                max-height: 0;
+                opacity: 0;
+            }
+            to {
+                max-height: 500px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 0 0 rgba(255, 0, 0, 0); }
+            50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.6); }
+            100% { box-shadow: 0 0 0 rgba(255, 0, 0, 0); }
+        }
+
+        @keyframes buttonPress {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes borderExpand {
+            0% { border-width: 3px; }
+            50% { border-width: 6px; }
+            100% { border-width: 3px; }
+        }
+
+        @keyframes textGlow {
+            0% { text-shadow: none; }
+            50% { text-shadow: 0 0 10px rgba(0, 0, 0, 0.8); }
+            100% { text-shadow: none; }
+        }
+
+        @keyframes loading {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: loading 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        .button-loading {
+            position: relative;
+            pointer-events: none;
+        }
+
+        .button-loading::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: loading 1s linear infinite;
         }
 
         @media (max-width: 768px) {
@@ -705,6 +811,12 @@
                     const pad = document.querySelector(`[data-index="${index}"]`);
                     pad.classList.add('loaded');
 
+                    // Add loading animation
+                    pad.style.animation = 'pulse 0.5s ease-out';
+                    setTimeout(() => {
+                        pad.style.animation = '';
+                    }, 500);
+
                     console.log(`Loaded sample ${index + 1}.mp3`);
                 } catch (error) {
                     console.log(`Could not load sample ${index + 1}.mp3:`, error.message);
@@ -806,9 +918,13 @@
                 const pad = document.querySelector(`[data-index="${index}"]`);
                 pad.classList.add('playing');
 
+                // Add extra visual feedback
+                pad.style.animation = 'buttonPress 0.1s ease-out, borderExpand 0.3s ease-out';
+
                 setTimeout(() => {
                     pad.classList.remove('playing');
-                }, Math.min(duration * 1000, 500));
+                    pad.style.animation = '';
+                }, Math.min(duration * 1000, 800));
             }
 
             setupEventListeners() {
@@ -842,7 +958,23 @@
                 document.addEventListener('keydown', (e) => {
                     const keyIndex = parseInt(e.key) - 1;
                     if (keyIndex >= 0 && keyIndex < 5) {
+                        // Prevent repeated keydown events while key is held
+                        if (e.repeat) return;
+
+                        // Add visual feedback
+                        const pad = document.querySelector(`[data-index="${keyIndex}"]`);
+                        pad.classList.add('keyboard-active');
+
                         this.playSample(keyIndex);
+                    }
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    const keyIndex = parseInt(e.key) - 1;
+                    if (keyIndex >= 0 && keyIndex < 5) {
+                        // Remove visual feedback
+                        const pad = document.querySelector(`[data-index="${keyIndex}"]`);
+                        pad.classList.remove('keyboard-active');
                     }
                 });
 
@@ -924,8 +1056,9 @@
                 }
 
                 const originalText = buttonElement.textContent;
-                buttonElement.textContent = 'Sending...';
+                buttonElement.innerHTML = '<span class="loading-spinner"></span>Sending...';
                 buttonElement.disabled = true;
+                buttonElement.classList.add('button-loading');
 
                 try {
                     const response = await fetch('/api/send-recording', {
@@ -945,6 +1078,7 @@
                 } finally {
                     buttonElement.textContent = originalText;
                     buttonElement.disabled = false;
+                    buttonElement.classList.remove('button-loading');
                 }
             }
 
@@ -1042,6 +1176,7 @@
                 audioElement.style.display = 'block';
 
                 const shareContainer = document.getElementById('shareContainer');
+                shareContainer.classList.add('show');
                 shareContainer.style.display = 'block';
 
                 this.recordingTime = 0;
