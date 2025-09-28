@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio Sampler</title>
+    <title>Аудио-сэмплер</title>
     <script src="https://unpkg.com/lamejs@1.2.0/lame.min.js"></script>
     <style>
         * {
@@ -725,33 +725,33 @@
 </head>
 <body>
     <div class="sampler-container">
-        <h1>Audio Sample<a href="/egg" class="jiggle-letter" aria-label="Easter egg">r</a></h1>
+        <h1>Audio Sample<a href="/egg" class="jiggle-letter" aria-label="Пасхалка">r</a></h1>
 
         <div class="sampler-grid">
             <div class="pad-container">
                 <button class="sample-pad" data-index="0">1</button>
                 <input type="range" class="pitch-slider" data-index="0" min="0.1" max="4" step="0.1" value="1">
-                <div class="pitch-label">Pitch</div>
+                <div class="pitch-label">Высота тона</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="1">2</button>
                 <input type="range" class="pitch-slider" data-index="1" min="0.1" max="4" step="0.1" value="1">
-                <div class="pitch-label">Pitch</div>
+                <div class="pitch-label">Высота тона</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="2">3</button>
                 <input type="range" class="pitch-slider" data-index="2" min="0.1" max="4" step="0.1" value="1">
-                <div class="pitch-label">Pitch</div>
+                <div class="pitch-label">Высота тона</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="3">4</button>
                 <input type="range" class="pitch-slider" data-index="3" min="0.1" max="4" step="0.1" value="1">
-                <div class="pitch-label">Pitch</div>
+                <div class="pitch-label">Высота тона</div>
             </div>
             <div class="pad-container">
                 <button class="sample-pad" data-index="4">5</button>
                 <input type="range" class="pitch-slider" data-index="4" min="0.1" max="4" step="0.1" value="1">
-                <div class="pitch-label">Pitch</div>
+                <div class="pitch-label">Высота тона</div>
             </div>
         </div>
 
@@ -770,45 +770,45 @@
             </div>
         </div>
 
-        <button class="panic-btn" id="panicBtn">STOP ALL</button>
+        <button class="panic-btn" id="panicBtn">СТОП ВСЕ</button>
 
         <div class="recording-section">
             <div class="recording-controls">
-                <button class="record-stop-btn" id="recordStopBtn">Record (30s)</button>
+                <button class="record-stop-btn" id="recordStopBtn">Record</button>
             </div>
             <div class="timer" id="timer">00:00</div>
             <audio class="recorded-audio" id="recordedAudio" controls style="display: none;"></audio>
         </div>
 
         <div class="share-container" id="shareContainer" style="display: none;">
-            <h3>Share Recording</h3>
+            <h3>Поделиться записью</h3>
 
             <div class="tabs">
-                <div class="tab active" data-tab="email-tab">Email</div>
+                <div class="tab active" data-tab="email-tab">Почта</div>
                 <div class="tab" data-tab="telegram-tab">Telegram</div>
-                <div class="tab" data-tab="download-tab">Download</div>
+                <div class="tab" data-tab="download-tab">Скачать</div>
             </div>
 
             <div class="tab-content">
                 <div class="tab-pane active" id="email-tab">
-                    <input type="email" id="emailInput" placeholder="Enter email address">
-                    <button class="share-btn" id="sendEmailButton">Send to Email</button>
+                    <input type="email" id="emailInput" placeholder="Введите адрес электронной почты">
+                    <button class="share-btn" id="sendEmailButton" data-default-text="Отправить на почту">Отправить на почту</button>
                 </div>
 
                 <div class="tab-pane" id="telegram-tab">
-                    <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;">Optional message to include with the voice note:</p>
-                    <input type="text" id="telegramMessageInput" placeholder="Add a message (optional)">
-                    <button class="share-btn" id="sendTelegramButton">Send to Telegram (Voice)</button>
+                    <p style="margin-bottom: 10px; font-size: 0.9em; color: #666;">Необязательное сообщение для голосовой заметки:</p>
+                    <input type="text" id="telegramMessageInput" placeholder="Добавьте сообщение (необязательно)">
+                    <button class="share-btn" id="sendTelegramButton" data-default-text="Отправить в Telegram">Отправить в Telegram (голос)</button>
                     <div id="telegramLinkRow" style="display:none; margin-top:10px; text-align:center;">
-                        <img id="telegramLinkQr" alt="Scan to open Telegram message" style="display:none; margin: 8px auto; width: 180px; height: 180px; border: 1px solid #000; background:#fff;" />
+                        <img id="telegramLinkQr" alt="Сканируйте, чтобы открыть сообщение в Telegram" style="display:none; margin: 8px auto; width: 180px; height: 180px; border: 1px solid #000; background:#fff;" />
                     </div>
                 </div>
 
                 <div class="tab-pane" id="download-tab">
                     <div class="download-info">
-                        <p>Download your recording as WebM file</p>
+                        <p>Скачайте запись в формате WebM</p>
                     </div>
-                    <button class="share-btn" id="downloadButton">Download Recording</button>
+                    <button class="share-btn" id="downloadButton">Скачать запись</button>
                 </div>
             </div>
         </div>
@@ -816,13 +816,13 @@
         <div class="status-message" id="statusMessage"></div>
 
         <div class="instructions">
-            <h3>Instructions</h3>
-            <p>• Click sample buttons or use keys 1-5 to play sounds</p>
-            <p>• Adjust pitch sliders to change playback speed</p>
-            <p>• Use delay control to add echo effects</p>
-            <p>• Use reverb control to add ambient effect</p>
-            <p>• Red STOP ALL button stops all playing sounds instantly</p>
-            <p>• Click Record to capture 30 seconds of audio with effects</p>
+            <h3>Инструкции</h3>
+            <p>• Нажимайте на кнопки сэмплов или используйте клавиши 1–5 для воспроизведения звуков</p>
+            <p>• Регулируйте ползунки высоты тона, чтобы менять скорость воспроизведения</p>
+            <p>• Используйте ползунок DELAY, чтобы добавить эффект эхо</p>
+            <p>• Используйте ползунок REVERB, чтобы добавить реверберацию</p>
+            <p>• Красная кнопка СТОП ВСЕ мгновенно останавливает все звучащие сэмплы</p>
+            <p>• Нажмите Record, чтобы записать аудио с эффектами</p>
         </div>
     </div>
 
@@ -854,9 +854,9 @@
                     this.setupEventListeners();
                     this.setupTabHandling();
                     await this.loadSamples();
-                    this.showStatus('Sampler ready! Click pads or use keys 1-5', 'success');
+                    this.showStatus('Готово! Нажимайте на пэды или используйте клавиши 1–5', 'success');
                 } catch (error) {
-                    this.showStatus('Error initializing audio: ' + error.message, 'error');
+                    this.showStatus('Ошибка инициализации аудио: ' + error.message, 'error');
                 }
             }
 
@@ -1295,7 +1295,7 @@
                 }
 
                 const originalText = buttonElement.textContent;
-                buttonElement.innerHTML = '<span class="loading-spinner"></span>Sending...';
+                buttonElement.innerHTML = '<span class="loading-spinner"></span>Отправка...';
                 buttonElement.disabled = true;
                 buttonElement.classList.add('button-loading');
 
@@ -1308,7 +1308,7 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        this.showStatus(`Recording sent successfully via ${method}!`, 'success');
+                        this.showStatus(`Запись успешно отправлена через ${method}!`, 'success');
                         // If telegram, show link row when provided
                         if (method === 'telegram_voice' || method === 'telegram') {
                             const linkRow = document.getElementById('telegramLinkRow');
@@ -1327,12 +1327,12 @@
                         buttonElement.textContent = 'Sent';
                         buttonElement.disabled = true;
                     } else {
-                        this.showStatus(`Error sending recording: ${data.error || 'Unknown error'}`, 'error');
+                        this.showStatus(`Ошибка отправки записи: ${data.error || 'Неизвестная ошибка'}`, 'error');
                         buttonElement.textContent = buttonElement.dataset.defaultText || originalText;
                         buttonElement.disabled = false;
                     }
                 } catch (error) {
-                    this.showStatus(`Error sending recording: ${error.message}`, 'error');
+                    this.showStatus(`Ошибка отправки записи: ${error.message}`, 'error');
                     buttonElement.textContent = buttonElement.dataset.defaultText || originalText;
                     buttonElement.disabled = false;
                 } finally {
@@ -1439,7 +1439,7 @@
                     this.showStatus('MP3 download started!', 'success');
                 } catch (error) {
                     console.error('Error converting to MP3:', error);
-                    this.showStatus('Error converting to MP3. Downloading original format...', 'error');
+                    this.showStatus('Ошибка конвертации в MP3. Скачиваем исходный формат...', 'error');
 
                     // Fallback to original format
                     const url = URL.createObjectURL(this.recordingBlob);
@@ -1483,7 +1483,7 @@
                     const recordStopBtn = document.getElementById('recordStopBtn');
                     const timer = document.getElementById('timer');
 
-                    recordStopBtn.textContent = 'Stop Recording';
+                    recordStopBtn.textContent = 'Stop';
                     recordStopBtn.classList.add('recording');
                     timer.classList.add('recording');
 
@@ -1496,7 +1496,7 @@
                         }
                     }, 1000);
 
-                    this.showStatus('Recording started...', 'success');
+                    this.showStatus('Запись началась...', 'success');
 
                     // Reset share buttons to default and enable
                     const emailBtn = document.getElementById('sendEmailButton');
@@ -1510,12 +1510,12 @@
                     if (emailBtn) {
                         emailBtn.disabled = false;
                         emailBtn.classList.remove('button-loading');
-                        emailBtn.textContent = emailBtn.dataset.defaultText || 'Send to Email';
+                    emailBtn.textContent = emailBtn.dataset.defaultText || 'Отправить на почту';
                     }
                     if (tgBtn) {
                         tgBtn.disabled = false;
                         tgBtn.classList.remove('button-loading');
-                        tgBtn.textContent = tgBtn.dataset.defaultText || 'Send to Telegram';
+                    tgBtn.textContent = tgBtn.dataset.defaultText || 'Отправить в Telegram';
                     }
                 } catch (error) {
                     this.showStatus('Error starting recording: ' + error.message, 'error');
@@ -1535,11 +1535,11 @@
                     const recordStopBtn = document.getElementById('recordStopBtn');
                     const timer = document.getElementById('timer');
 
-                    recordStopBtn.textContent = 'Record (30s)';
+                    recordStopBtn.textContent = 'Record';
                     recordStopBtn.classList.remove('recording');
                     timer.classList.remove('recording');
 
-                    this.showStatus('Recording stopped', 'success');
+                    this.showStatus('Запись остановлена', 'success');
                 }
             }
 
@@ -1557,13 +1557,13 @@
                 if (hadAudio) {
                     shareContainer.classList.add('show');
                     shareContainer.style.display = 'block';
-                    this.showStatus('Recording complete! Use the tabs below to share or download.', 'success');
+                    this.showStatus('Запись готова! Используйте вкладки ниже, чтобы поделиться или скачать.', 'success');
                 } else {
                     // Hide audio and share UI if nothing meaningful was captured
                     audioElement.style.display = 'none';
                     shareContainer.classList.remove('show');
                     shareContainer.style.display = 'none';
-                    this.showStatus('No sound was captured. Press Record and play pads.', 'error');
+                    this.showStatus('Звук не был записан. Нажмите Record и воспроизведите пэды.', 'error');
                     URL.revokeObjectURL(url);
                     return;
                 }
