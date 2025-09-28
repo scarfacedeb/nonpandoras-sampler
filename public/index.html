@@ -462,13 +462,7 @@
             transform: none;
         }
 
-        .download-info {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #000000;
-            font-size: 1em;
-            font-weight: 600;
-        }
+        /* .download-info removed */
 
         .timer {
             font-size: 2em;
@@ -786,7 +780,7 @@
             <div class="tabs">
                 <div class="tab active" data-tab="email-tab">Почта</div>
                 <div class="tab" data-tab="telegram-tab">Telegram</div>
-                <div class="tab" data-tab="download-tab">Скачать</div>
+                
             </div>
 
             <div class="tab-content">
@@ -804,12 +798,7 @@
                     </div>
                 </div>
 
-                <div class="tab-pane" id="download-tab">
-                    <div class="download-info">
-                        <p>Скачайте запись в формате WebM</p>
-                    </div>
-                    <button class="share-btn" id="downloadButton">Скачать запись</button>
-                </div>
+                
             </div>
         </div>
 
@@ -1235,9 +1224,7 @@
                 emailBtn.addEventListener('click', () => { this.sendRecording('email'); });
                 tgBtn.addEventListener('click', () => { this.sendRecording('telegram_voice'); });
 
-                document.getElementById('downloadButton').addEventListener('click', () => {
-                    this.downloadRecording();
-                });
+                // Download tab removed
             }
 
             async sendRecording(method) {
@@ -1417,41 +1404,7 @@
                 });
             }
 
-            async downloadRecording() {
-                if (!this.recordingBlob) {
-                    this.showStatus('No recording available to download!', 'error');
-                    return;
-                }
-
-                try {
-                    this.showStatus('Converting to MP3...', 'success');
-                    const mp3Blob = await this.convertToMp3(this.recordingBlob);
-
-                    const url = URL.createObjectURL(mp3Blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'sampler-recording.mp3';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-
-                    this.showStatus('MP3 download started!', 'success');
-                } catch (error) {
-                    console.error('Error converting to MP3:', error);
-                    this.showStatus('Ошибка конвертации в MP3. Скачиваем исходный формат...', 'error');
-
-                    // Fallback to original format
-                    const url = URL.createObjectURL(this.recordingBlob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'sampler-recording.webm';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }
-            }
+            
 
             async startRecording() {
                 try {
