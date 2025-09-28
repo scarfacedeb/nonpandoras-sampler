@@ -43,6 +43,31 @@
             letter-spacing: 3px;
         }
 
+        /* Easter-egg letter link styling and subtle jiggle animation */
+        .jiggle-letter {
+            display: inline-block;
+            text-decoration: none;
+            color: inherit;
+            transform-origin: bottom center;
+            transition: text-shadow 150ms ease;
+        }
+        .jiggle-letter.do-jiggle {
+            animation: jiggle 300ms ease-in-out 1;
+            text-shadow: 0 0 6px rgba(255, 0, 128, 0.7), 0 0 12px rgba(255, 0, 128, 0.5);
+        }
+        .jiggle-letter:hover {
+            animation: jiggle 250ms ease-in-out 1;
+            text-decoration: none;
+            text-shadow: 0 0 6px rgba(255, 0, 128, 0.7), 0 0 12px rgba(255, 0, 128, 0.5);
+        }
+        @keyframes jiggle {
+            0%   { transform: rotate(0deg) translateY(0); }
+            25%  { transform: rotate(5deg) translateY(-1px); }
+            50%  { transform: rotate(0deg) translateY(0); }
+            75%  { transform: rotate(-5deg) translateY(-1px); }
+            100% { transform: rotate(0deg) translateY(0); }
+        }
+
         .sampler-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -700,7 +725,7 @@
 </head>
 <body>
     <div class="sampler-container">
-        <h1>Audio Sampler</h1>
+        <h1>Audio Sample<a href="/egg" class="jiggle-letter" aria-label="Easter egg">r</a></h1>
 
         <div class="sampler-grid">
             <div class="pad-container">
@@ -1568,6 +1593,23 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             new AudioSampler();
+
+            // Subtle jiggle animation for the linked letter every 5–10 seconds
+            const jiggleEl = document.querySelector('.jiggle-letter');
+            if (jiggleEl) {
+                const randDelay = () => 2000 + Math.floor(Math.random() * 3000); // 2–5s
+                const trigger = () => {
+                    jiggleEl.classList.remove('do-jiggle');
+                    void jiggleEl.offsetWidth; // reflow to restart animation reliably
+                    jiggleEl.classList.add('do-jiggle');
+                };
+                const onEnd = () => {
+                    jiggleEl.classList.remove('do-jiggle'); // remove glow after jiggle ends
+                    setTimeout(trigger, randDelay());
+                };
+                jiggleEl.addEventListener('animationend', onEnd);
+                setTimeout(trigger, randDelay());
+            }
         });
     </script>
 </body>
