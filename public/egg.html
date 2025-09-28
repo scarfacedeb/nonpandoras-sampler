@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Аудио-сэмплер</title>
+    <title>Sampler</title>
     <script src="https://unpkg.com/lamejs@1.2.0/lame.min.js"></script>
+    <!-- Technical UI fonts with Cyrillic support -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&family=Exo+2:wght@700;900&family=JetBrains+Mono:wght@600;700&family=Russo+One&family=Stalinist+One&display=swap&subset=cyrillic" rel="stylesheet">
     <style>
         :root {
             --primary: #39FF14;
@@ -23,7 +27,7 @@
         }
 
         body {
-            font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Manrope', 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
             background: #000000;
             min-height: 100vh;
             display: flex;
@@ -44,13 +48,19 @@
         }
 
         h1 {
+            font-family: 'Stalinist One', 'Russo One', 'Exo 2', 'IBM Plex Sans', Arial, sans-serif;
             text-align: center;
             color: #000000;
             margin-bottom: 40px;
-            font-size: 3em;
+            font-size: 3.25em;
             font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 5px;
+            text-rendering: optimizeLegibility;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         .sampler-grid {
@@ -159,7 +169,8 @@
             text-align: center;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            font-family: 'Jura', 'Manrope', Arial, sans-serif;
         }
 
         .effects-block {
@@ -194,9 +205,10 @@
             font-weight: 900;
             color: #000000;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 0.85em;
+            letter-spacing: 1.5px;
+            font-size: 0.9em;
             text-align: center;
+            font-family: 'Jura', 'Manrope', Arial, sans-serif;
         }
 
         .effect-slider {
@@ -346,10 +358,11 @@
             border-bottom: none;
             border-right: none;
             cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 700;
+            font-size: 0.95em;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            font-family: 'Jura', 'Manrope', Arial, sans-serif;
             transition: all 0.15s ease;
             color: #000000;
         }
@@ -426,11 +439,12 @@
             border-radius: 0;
             cursor: pointer;
             font-size: 1em;
-            font-weight: 900;
+            font-weight: 800;
             transition: all 0.15s ease;
             width: 100%;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            font-family: 'Jura', 'Manrope', Arial, sans-serif;
         }
 
         .share-btn:hover {
@@ -453,7 +467,7 @@
             font-size: 2em;
             font-weight: 900;
             color: #000000;
-            font-family: 'Courier New', monospace;
+            font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
             text-align: center;
             margin: 20px 0;
         }
@@ -680,7 +694,8 @@
             }
 
             h1 {
-                font-size: 2em;
+                font-size: 1.8em;
+                letter-spacing: 3px;
             }
         }
 
@@ -696,6 +711,10 @@
             .reverb-control {
                 flex-direction: column;
                 gap: 10px;
+            }
+            h1 {
+                font-size: 1.4em;
+                letter-spacing: 2px;
             }
         }
         /* === Acid Egg Overrides === */
@@ -727,13 +746,17 @@
 
         h1 {
             margin-bottom: 40px;
-            font-size: 3.2em;
-            letter-spacing: 4px;
+            font-size: 3.4em;
+            letter-spacing: 6px;
             background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
             text-shadow: 0 0 18px rgba(var(--primary-rgb), 0.35), 0 0 26px rgba(var(--secondary-rgb), 0.25);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         .sample-pad {
@@ -906,6 +929,7 @@
 
         /* Buttons: Record / Panic */
         .record-stop-btn {
+            font-family: 'Jura', 'Manrope', Arial, sans-serif;
             background: linear-gradient(135deg, #FF2E63, var(--secondary));
             border: 2px solid #FF2E63;
             color: #0a0a0a;
@@ -940,6 +964,7 @@
             border-radius: 8px;
             box-shadow: 0 0 18px rgba(255,77,77,0.4);
             letter-spacing: 2px;
+            font-family: 'Jura', 'Manrope', Arial, sans-serif;
         }
         .panic-btn:hover {
             transform: translateY(-1px) scale(1.04);
@@ -1111,7 +1136,7 @@
     <canvas class="shapes-canvas" id="shapesCanvas" aria-hidden="true"></canvas>
 
     <div class="sampler-container">
-        <h1>Аудио-сэмплер</h1>
+        <h1>Sampler</h1>
 
         <div class="sampler-grid">
             <div class="pad-container">
