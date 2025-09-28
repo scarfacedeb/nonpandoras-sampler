@@ -2093,6 +2093,34 @@
         });
     </script>
     <script>
+        // Inactivity timer: go back to the main page after 30s of no input
+        (function() {
+            const LIMIT = 60000; // 60 seconds
+            let inactivityTimer;
+
+            function resetInactivity() {
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(() => {
+                    window.location.href = '/';
+                }, LIMIT);
+            }
+
+            const events = ['mousemove','mousedown','keydown','touchstart','wheel','scroll','focus','click'];
+            events.forEach(evt => window.addEventListener(evt, resetInactivity, { passive: true }));
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    clearTimeout(inactivityTimer);
+                } else {
+                    resetInactivity();
+                }
+            });
+
+            // start
+            resetInactivity();
+        })();
+    </script>
+    <script>
         // Pixelated falling shapes (triangles/arrows) overlay
         (function() {
             const canvas = document.getElementById('shapesCanvas');
